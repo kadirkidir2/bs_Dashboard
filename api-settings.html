@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Ayarları - Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 2rem;
+        }
+        
+        .api-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .api-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .api-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .api-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .api-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .api-subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin: 0;
+        }
+        
+        .api-description {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-text {
+            color: #7f8c8d;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-save:hover {
+            background: linear-gradient(135deg, #45a049, #3d8b3d);
+        }
+        
+        .btn-test {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-test:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #F44336, #D32F2F);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-clear:hover {
+            background: linear-gradient(135deg, #D32F2F, #C62828);
+        }
+        
+        .page-header {
+            color: white;
+            text-align: center;
+            margin: 2rem 0;
+            font-weight: 300;
+            font-size: 2.5rem;
+        }
+        
+        .page-description {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            margin-left: 1rem;
+        }
+        
+        .status-connected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .status-disconnected {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .api-icon-shopify { background: linear-gradient(135deg, #96bf48, #7fad3b); }
+        .api-icon-meta { background: linear-gradient(135deg, #1877F2, #0a59c1); }
+        .api-icon-google { background: linear-gradient(135deg, #4285F4, #2a75f3); }
+        .api-icon-tiktok { background: linear-gradient(135deg, #000000, #25F4EE); }
+        .api-icon-twitter { background: linear-gradient(135deg, #1DA1F2, #0d8ecf); }
+        .api-icon-amazon { background: linear-gradient(135deg, #FF9900, #e68a00); }
+        .api-icon-tsoft { background: linear-gradient(135deg, #6B7280, #4B5563); }
+        .api-icon-logo { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+        
+        .nav-link {
+            color: white;
+            margin: 0 1rem;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            opacity: 1;
+            color: white;
+        }
+        
+        .nav-link.active {
+            opacity: 1;
+            font-weight: 500;
+            color: white;
+            border-bottom: 2px solid white;
+        }
+        
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar-brand {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .connection-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .password-toggle {
+            cursor: pointer;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .form-control-password {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">
+                <i class="fas fa-chart-line me-2"></i>
+                Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="api-settings.html">API Ayarları</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reports.html">Raporlar</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1 class="page-header">API Bağlantı Ayarları</h1>
+        <p class="page-description">
+            Veri kaynaklarınızı bağlamak için aşağıdaki API bilgilerini girin. Tüm bilgiler güvenli bir şekilde saklanır ve yalnızca veri çekmek için kullanılır. Her bir platform için gerekli API anahtarlarını ve kimlik bilgilerini girin.
+        </p>
+        
+        <!-- Shopify API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-shopify">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Shopify</h2>
+                        <span class="status-badge status-disconnected" id="shopify-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">E-ticaret platformu</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Shopify mağazanızdan sipariş, ürün ve müşteri verilerini çekmek için API bilgilerinizi girin. Shopify Admin API'ye erişim için mağaza adınızı ve API anahtarınızı sağlamanız gerekir.
+            </p>
+            
+            <form id="shopify-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="shopify-shop-name" class="form-label">Mağaza Adı</label>
+                        <input type="text" class="form-control" id="shopify-shop-name" placeholder="mystore (myshopify.com olmadan)">
+                        <div class="form-text">Mağaza adınızı myshopify.com olmadan girin (örn: mystore)</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="shopify-access-token" class="form-label">Access Token</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="shopify-access-token" placeholder="shpat_...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('shopify-access-token')"></i>
+                        </div>
+                        <div class="form-text">Admin API access token (shpat_ ile başlar)</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('shopify')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('shopify')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('shopify')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Meta (Facebook/Instagram) API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-meta">
+                    <i class="fab fa-facebook"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Meta (Facebook/Instagram)</h2>
+                        <span class="status-badge status-disconnected" id="meta-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">Sosyal medya platformları</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Facebook ve Instagram hesaplarınızdan takipçi, etkileşim ve reklam verilerini çekmek için Meta API bilgilerinizi girin. Meta Business Suite'ten alacağınız uzun ömürlü bir erişim tokeni gereklidir.
+            </p>
+            
+            <form id="meta-form">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="meta-access-token" class="form-label">Access Token</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="meta-access-token" placeholder="EAAK...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('meta-access-token')"></i>
+                        </div>
+                        <div class="form-text">Meta Graph API için uzun ömürlü erişim tokeni</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('meta')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('meta')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('meta')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Google Analytics API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-google">
+                    <i class="fab fa-google"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Google Analytics</h2>
+                        <span class="status-badge status-disconnected" id="google-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">Web analitik platformu</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Web sitenizin trafik ve kullanıcı verilerini çekmek için Google Analytics API bilgilerinizi girin. Google Analytics 4 (GA4) için bir hizmet hesabı JSON dosyası ve property ID gereklidir.
+            </p>
+            
+            <form id="google-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="google-property-id" class="form-label">Property ID</label>
+                        <input type="text" class="form-control" id="google-property-id" placeholder="123456789">
+                        <div class="form-text">GA4 property ID'niz</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="google-service-account" class="form-label">Service Account JSON</label>
+                        <textarea class="form-control" id="google-service-account" rows="4" placeholder='{"type": "service_account", ...}'></textarea>
+                        <div class="form-text">Hizmet hesabı JSON dosyasının içeriği</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('google')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('google')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('google')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- TikTok Ads API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-tiktok">
+                    <i class="fab fa-tiktok"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">TikTok Ads</h2>
+                        <span class="status-badge status-disconnected" id="tiktok-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">Sosyal medya reklam platformu</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                TikTok reklam kampanyalarınızın performans verilerini çekmek için TikTok Ads API bilgilerinizi girin. TikTok Business Center'dan alacağınız API bilgileri gereklidir.
+            </p>
+            
+            <form id="tiktok-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="tiktok-app-id" class="form-label">App ID</label>
+                        <input type="text" class="form-control" id="tiktok-app-id" placeholder="123456789">
+                        <div class="form-text">TikTok Developer Portal'dan alınan App ID</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tiktok-secret" class="form-label">App Secret</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="tiktok-secret" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('tiktok-secret')"></i>
+                        </div>
+                        <div class="form-text">TikTok Developer Portal'dan alınan App Secret</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="tiktok-access-token" class="form-label">Access Token</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="tiktok-access-token" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('tiktok-access-token')"></i>
+                        </div>
+                        <div class="form-text">TikTok Ads API için erişim tokeni</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tiktok-advertiser-id" class="form-label">Advertiser ID</label>
+                        <input type="text" class="form-control" id="tiktok-advertiser-id" placeholder="123456789">
+                        <div class="form-text">TikTok Ads hesabınızın Advertiser ID'si</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('tiktok')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('tiktok')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('tiktok')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Twitter (X) API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-twitter">
+                    <i class="fab fa-twitter"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Twitter (X)</h2>
+                        <span class="status-badge status-disconnected" id="twitter-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">Sosyal medya platformu</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Twitter hesabınızdan takipçi, tweet ve etkileşim verilerini çekmek için Twitter API bilgilerinizi girin. Twitter Developer Portal'dan alacağınız API anahtarları gereklidir.
+            </p>
+            
+            <form id="twitter-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="twitter-api-key" class="form-label">API Key</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="twitter-api-key" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('twitter-api-key')"></i>
+                        </div>
+                        <div class="form-text">Twitter Developer Portal'dan alınan API Key</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="twitter-api-secret" class="form-label">API Secret</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="twitter-api-secret" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('twitter-api-secret')"></i>
+                        </div>
+                        <div class="form-text">Twitter Developer Portal'dan alınan API Secret</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="twitter-access-token" class="form-label">Access Token</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="twitter-access-token" placeholder="123456789-abcdef...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('twitter-access-token')"></i>
+                        </div>
+                        <div class="form-text">Twitter API için erişim tokeni</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="twitter-access-token-secret" class="form-label">Access Token Secret</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="twitter-access-token-secret" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('twitter-access-token-secret')"></i>
+                        </div>
+                        <div class="form-text">Twitter API için erişim tokeni gizli anahtarı</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('twitter')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('twitter')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('twitter')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Amazon API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-amazon">
+                    <i class="fab fa-amazon"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Amazon</h2>
+                        <span class="status-badge status-disconnected" id="amazon-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">E-ticaret platformu</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Amazon satıcı hesabınızdan sipariş, ürün ve satış verilerini çekmek için Amazon Marketplace Web Service (MWS) API bilgilerinizi girin.
+            </p>
+            
+            <form id="amazon-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="amazon-seller-id" class="form-label">Seller ID</label>
+                        <input type="text" class="form-control" id="amazon-seller-id" placeholder="A1B2C3D4E5F">
+                        <div class="form-text">Amazon Seller Central hesabınızın Seller ID'si</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="amazon-marketplace-id" class="form-label">Marketplace ID</label>
+                        <input type="text" class="form-control" id="amazon-marketplace-id" placeholder="A1B2C3D4E5F">
+                        <div class="form-text">Amazon Marketplace ID'niz (ülkeye göre değişir)</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="amazon-access-key" class="form-label">Access Key</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="amazon-access-key" placeholder="AKIA...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('amazon-access-key')"></i>
+                        </div>
+                        <div class="form-text">Amazon MWS için erişim anahtarı</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="amazon-secret-key" class="form-label">Secret Key</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="amazon-secret-key" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('amazon-secret-key')"></i>
+                        </div>
+                        <div class="form-text">Amazon MWS için gizli anahtar</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('amazon')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('amazon')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('amazon')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- T-Soft API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-tsoft">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">T-Soft</h2>
+                        <span class="status-badge status-disconnected" id="tsoft-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">E-ticaret yazılımı</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                T-Soft e-ticaret yazılımınızdan sipariş, ürün ve müşteri verilerini çekmek için API bilgilerinizi girin. T-Soft yönetim panelinizden alacağınız API anahtarları gereklidir.
+            </p>
+            
+            <form id="tsoft-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="tsoft-api-key" class="form-label">API Key</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="tsoft-api-key" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('tsoft-api-key')"></i>
+                        </div>
+                        <div class="form-text">T-Soft yönetim panelinden alınan API Key</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tsoft-api-secret" class="form-label">API Secret</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="tsoft-api-secret" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('tsoft-api-secret')"></i>
+                        </div>
+                        <div class="form-text">T-Soft yönetim panelinden alınan API Secret</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="tsoft-store-url" class="form-label">Mağaza URL</label>
+                        <input type="text" class="form-control" id="tsoft-store-url" placeholder="https://www.magazam.com">
+                        <div class="form-text">T-Soft mağazanızın tam URL'si</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('tsoft')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('tsoft')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('tsoft')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Logo API -->
+        <div class="api-card">
+            <div class="api-header">
+                <div class="api-icon api-icon-logo">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <h2 class="api-title">Logo</h2>
+                        <span class="status-badge status-disconnected" id="logo-status">Bağlı Değil</span>
+                    </div>
+                    <p class="api-subtitle">Muhasebe ve ERP yazılımı</p>
+                </div>
+            </div>
+            
+            <p class="api-description">
+                Logo muhasebe ve ERP yazılımınızdan finansal ve operasyonel verileri çekmek için API bilgilerinizi girin. Logo Connect platformundan alacağınız API anahtarları gereklidir.
+            </p>
+            
+            <form id="logo-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="logo-client-id" class="form-label">Client ID</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="logo-client-id" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('logo-client-id')"></i>
+                        </div>
+                        <div class="form-text">Logo Connect platformundan alınan Client ID</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="logo-client-secret" class="form-label">Client Secret</label>
+                        <div class="form-control-password">
+                            <input type="password" class="form-control" id="logo-client-secret" placeholder="abcdef123456...">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('logo-client-secret')"></i>
+                        </div>
+                        <div class="form-text">Logo Connect platformundan alınan Client Secret</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="logo-company-nr" class="form-label">Firma Numarası</label>
+                        <input type="text" class="form-control" id="logo-company-nr" placeholder="001">
+                        <div class="form-text">Logo'daki firma numaranız</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="logo-api-url" class="form-label">API URL</label>
+                        <input type="text" class="form-control" id="logo-api-url" placeholder="https://api.logo.com.tr">
+                        <div class="form-text">Logo API'nin URL'si</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-test me-2" onclick="testConnection('logo')">Bağlantıyı Test Et</button>
+                    <button type="button" class="btn btn-clear me-2" onclick="clearForm('logo')">Temizle</button>
+                    <button type="button" class="btn btn-save" onclick="saveCredentials('logo')">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Şifre görünürlüğünü değiştir
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling;
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+        
+        // Formu temizle
+        function clearForm(platform) {
+            const form = document.getElementById(`${platform}-form`);
+            form.reset();
+            
+            // Bağlantı durumunu güncelle
+            updateConnectionStatus(platform, false);
+            
+            // Local storage'dan sil
+            localStorage.removeItem(`${platform}_credentials`);
+            
+            showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} API bilgileri temizlendi.`);
+        }
+        
+        // API bilgilerini kaydet
+        function saveCredentials(platform) {
+            const form = document.getElementById(`${platform}-form`);
+            const formData = new FormData(form);
+            const credentials = {};
+            
+            // Form elemanlarını döngüyle al
+            const inputs = form.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                const key = input.id.replace(`${platform}-`, '').replace(/-/g, '_');
+                credentials[key] = input.value;
+            });
+            
+            // Local storage'a kaydet (gerçek uygulamada güvenli bir şekilde sunucuya gönderilmeli)
+            localStorage.setItem(`${platform}_credentials`, JSON.stringify(credentials));
+            
+            // Bağlantı durumunu güncelle
+            updateConnectionStatus(platform, true);
+            
+            // Başarı mesajı göster
+            showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} API bilgileri kaydedildi.`);
+            
+            // API endpoint'ine gönder (gerçek uygulamada)
+            // fetch('/api/credentials/save', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({
+            //         platform: platform,
+            //         credentials: credentials
+            //     }),
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     console.log('Success:', data);
+            //     showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} API bilgileri kaydedildi.`);
+            // })
+            // .catch((error) => {
+            //     console.error('Error:', error);
+            //     showToast(`Hata: ${platform} API bilgileri kaydedilemedi.`, 'error');
+            // });
+        }
+        
+        // Bağlantıyı test et
+        function testConnection(platform) {
+            // Gerçek uygulamada API'ye istek gönderilir
+            // Burada simüle ediyoruz
+            
+            const form = document.getElementById(`${platform}-form`);
+            const inputs = form.querySelectorAll('input, textarea');
+            let allFilled = true;
+            
+            // Tüm alanların dolu olup olmadığını kontrol et
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    allFilled = false;
+                }
+            });
+            
+            if (!allFilled) {
+                showToast(`Lütfen tüm ${platform} API bilgilerini doldurun.`, 'error');
+                return;
+            }
+            
+            // Yükleniyor göster
+            const statusBadge = document.getElementById(`${platform}-status`);
+            statusBadge.textContent = "Test Ediliyor...";
+            statusBadge.className = "status-badge";
+            statusBadge.style.backgroundColor = "#FFC107";
+            statusBadge.style.color = "black";
+            
+            // API isteği simülasyonu
+            setTimeout(() => {
+                // Rastgele başarı/başarısızlık (gerçek uygulamada API yanıtına göre)
+                const success = Math.random() > 0.3; // %70 başarı oranı
+                
+                if (success) {
+                    updateConnectionStatus(platform, true);
+                    showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} bağlantısı başarılı!`);
+                } else {
+                    updateConnectionStatus(platform, false);
+                    showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} bağlantısı başarısız. Bilgilerinizi kontrol edin.`, 'error');
+                }
+            }, 1500);
+        }
+        
+        // Bağlantı durumunu güncelle
+        function updateConnectionStatus(platform, isConnected) {
+            const statusBadge = document.getElementById(`${platform}-status`);
+            
+            if (isConnected) {
+                statusBadge.textContent = "Bağlı";
+                statusBadge.className = "status-badge status-connected";
+            } else {
+                statusBadge.textContent = "Bağlı Değil";
+                statusBadge.className = "status-badge status-disconnected";
+            }
+        }
+        
+        // Toast mesajı göster
+        function showToast(message, type = 'success') {
+            // Toast container yoksa oluştur
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Toast oluştur
+            const toastId = `toast-${Date.now()}`;
+            const toastHtml = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}">
+                        <strong class="me-auto">${type === 'error' ? 'Hata' : 'Başarılı'}</strong>
+                        <button type="button" class="btn-close ${type === 'error' ? 'btn-close-white' : 'btn-close-white'}" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Toast'ı göster
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            // Otomatik temizleme
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+        
+        // Sayfa yüklendiğinde kaydedilmiş bilgileri yükle
+        document.addEventListener('DOMContentLoaded', function() {
+            const platforms = ['shopify', 'meta', 'google', 'tiktok', 'twitter', 'amazon', 'tsoft', 'logo'];
+            
+            platforms.forEach(platform => {
+                const savedCredentials = localStorage.getItem(`${platform}_credentials`);
+                
+                if (savedCredentials) {
+                    try {
+                        const credentials = JSON.parse(savedCredentials);
+                        const form = document.getElementById(`${platform}-form`);
+                        
+                        // Form alanlarını doldur
+                        Object.keys(credentials).forEach(key => {
+                            const formattedKey = key.replace(/_/g, '-');
+                            const inputId = `${platform}-${formattedKey}`;
+                            const input = document.getElementById(inputId);
+                            
+                            if (input) {
+                                input.value = credentials[key];
+                            }
+                        });
+                        
+                        // Bağlantı durumunu güncelle
+                        updateConnectionStatus(platform, true);
+                    } catch (e) {
+                        console.error(`${platform} bilgileri yüklenirken hata:`, e);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
