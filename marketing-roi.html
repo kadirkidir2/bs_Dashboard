@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pazarlama ROI Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card.success::before {
+            background: var(--success-gradient);
+        }
+
+        .metric-card.warning::before {
+            background: var(--warning-gradient);
+        }
+
+        .metric-card.danger::before {
+            background: var(--secondary-gradient);
+        }
+
+        .metric-card.dark::before {
+            background: var(--dark-gradient);
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .metric-change.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .metric-change.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            height: 400px;
+        }
+
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .home-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .performance-list {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .performance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .performance-item:last-child {
+            border-bottom: none;
+        }
+
+        .performance-label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .performance-value {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .page-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            vertical-align: text-bottom;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-chart-line me-3"></i>
+                    Pazarlama ROI Dashboard
+                </h1>
+                <p class="page-subtitle">Kanal Performansı ve Yatırım Getirisi Analizi</p>
+            </div>
+
+            <!-- Ana Metrikler -->
+            <div class="row mb-4" id="mainMetricsContainer">
+                <div class="col-12 text-center py-5">
+                    <div class="loading-spinner text-primary"></div>
+                    <p>Metrikler yükleniyor...</p>
+                </div>
+            </div>
+
+            <!-- Grafikler -->
+            <div class="row mb-4">
+                <div class="col-lg-7">
+                    <div class="chart-container">
+                        <h3 class="chart-title">
+                            <i class="fas fa-bar-chart me-2"></i>
+                            Kanallara Göre ROAS
+                        </h3>
+                        <canvas id="roasChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="chart-container">
+                        <h3 class="chart-title">
+                            <i class="fas fa-pie-chart me-2"></i>
+                            Pazarlama Bütçe Dağılımı
+                        </h3>
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alt Metrikler -->
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="performance-list" id="bestCampaignsContainer">
+                        <h3 class="chart-title">
+                            <i class="fas fa-trophy me-2"></i>
+                            En İyi Kampanyalar
+                        </h3>
+                        <div class="text-center py-3">
+                            <div class="loading-spinner text-primary"></div>
+                            <p>Veriler yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="performance-list" id="channelPerformanceContainer">
+                        <h3 class="chart-title">
+                            <i class="fas fa-chart-area me-2"></i>
+                            Kanal Performansı
+                        </h3>
+                        <div class="text-center py-3">
+                            <div class="loading-spinner text-primary"></div>
+                            <p>Veriler yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="performance-list" id="keyMetricsContainer">
+                        <h3 class="chart-title">
+                            <i class="fas fa-key me-2"></i>
+                            Anahtar Metrikler
+                        </h3>
+                        <div class="text-center py-3">
+                            <div class="loading-spinner text-primary"></div>
+                            <p>Veriler yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ana Sayfa Butonu -->
+            <div class="text-center mt-4">
+                <a href="dashboard.html" class="home-btn">
+                    <i class="fas fa-home"></i>
+                    Ana Sayfaya Dön
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // API Endpoint'i
+        const API_ENDPOINT = 'http://localhost:5000/api/marketing_roi/data';
+        
+        // Grafik referansları
+        let roasChart = null;
+        let budgetChart = null;
+
+        // Sayfa yüklendiğinde verileri çek
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAllData();
+        });
+
+        // Tüm verileri tek seferde çek
+        async function fetchAllData() {
+            try {
+                const response = await fetch(API_ENDPOINT);
+                if (!response.ok) {
+                    throw new Error('API yanıtı başarısız');
+                }
+                const allData = await response.json();
+                
+                // Verileri türlerine göre filtrele
+                const mainMetrics = allData.filter(item => item.type === 'main_metric');
+                const channelRoas = allData.filter(item => item.type === 'channel_roas');
+                const bestCampaigns = allData.filter(item => item.type === 'best_campaign');
+                const channelPerformance = allData.filter(item => item.type === 'channel_performance');
+                const keyMetrics = allData.filter(item => item.type === 'key_metric');
+                const budgetDistribution = allData.filter(item => item.type === 'budget_distribution');
+                
+                // UI'yı güncelle
+                renderMainMetrics(mainMetrics);
+                renderChannelRoas(channelRoas);
+                renderBudgetDistribution(budgetDistribution);
+                renderBestCampaigns(bestCampaigns);
+                renderChannelPerformance(channelPerformance);
+                renderKeyMetrics(keyMetrics);
+                
+            } catch (error) {
+                console.error('Veri yüklenirken hata oluştu:', error);
+                showErrorMessages();
+            }
+        }
+
+        // Ana metrikleri render et
+        function renderMainMetrics(metrics) {
+            const container = document.getElementById('mainMetricsContainer');
+            container.innerHTML = '';
+            
+            // Her metrik için kart oluştur
+            metrics.forEach(metric => {
+                const cardClass = getMetricCardClass(metric.id);
+                const iconClass = getMetricIconClass(metric.id);
+                
+                const metricHtml = `
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card ${cardClass}">
+                            ${metric.trend !== null ? `
+                            <div class="metric-change ${metric.trend >= 0 ? 'positive' : 'negative'}">
+                                ${metric.trend >= 0 ? '+' : ''}${metric.trend}%
+                            </div>
+                            ` : ''}
+                            <div class="metric-icon" style="background: ${metric.color || 'var(--primary-gradient)'};">
+                                <i class="${iconClass}"></i>
+                            </div>
+                            <div class="metric-value">${metric.display_value}</div>
+                            <div class="metric-label">${metric.name}</div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', metricHtml);
+            });
+        }
+
+        // Metrik kartı sınıfını belirle
+        function getMetricCardClass(metricId) {
+            switch(metricId) {
+                case 1: return 'success'; // Genel ROAS
+                case 3: return 'danger';   // CTR Oranı
+                case 4: return 'dark';     // Pazarlama Harcama
+                default: return '';        // Diğerleri
+            }
+        }
+
+        // Metrik ikonunu belirle
+        function getMetricIconClass(metricId) {
+            switch(metricId) {
+                case 1: return 'fas fa-chart-line';
+                case 2: return 'fas fa-mouse-pointer';
+                case 3: return 'fas fa-eye';
+                case 4: return 'fas fa-shopping-cart';
+                default: return 'fas fa-chart-pie';
+            }
+        }
+
+        // Kanal ROAS grafiğini render et
+        function renderChannelRoas(roasData) {
+            try {
+                const labels = roasData.map(item => item.name);
+                const data = roasData.map(item => item.value);
+                const backgroundColors = roasData.map(item => item.color || '#667eea');
+                
+                const ctx = document.getElementById('roasChart').getContext('2d');
+                
+                if (roasChart) {
+                    roasChart.destroy();
+                }
+                
+                roasChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'ROAS',
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.8', '1')),
+                            borderWidth: 2,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}x`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + 'x';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('ROAS grafiği oluşturulurken hata:', error);
+                document.getElementById('roasChart').parentElement.innerHTML += `
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>ROAS grafiği yüklenemedi</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Bütçe dağılım grafiğini render et
+        function renderBudgetDistribution(budgetData) {
+            try {
+                const labels = budgetData.map(item => item.name);
+                const data = budgetData.map(item => item.value);
+                const backgroundColors = budgetData.map(item => item.color || '#667eea');
+                
+                const ctx = document.getElementById('budgetChart').getContext('2d');
+                
+                if (budgetChart) {
+                    budgetChart.destroy();
+                }
+                
+                budgetChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.8', '1')),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Bütçe grafiği oluşturulurken hata:', error);
+                document.getElementById('budgetChart').parentElement.innerHTML += `
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Bütçe grafiği yüklenemedi</p>
+                    </div>
+                `;
+            }
+        }
+
+        // En iyi kampanyaları render et
+        function renderBestCampaigns(campaigns) {
+            const container = document.getElementById('bestCampaignsContainer');
+            // Başlığı koru, yükleme mesajını kaldır
+            container.querySelector('.text-center').remove();
+            
+            campaigns.forEach(campaign => {
+                const campaignHtml = `
+                    <div class="performance-item">
+                        <span class="performance-label">${campaign.name}</span>
+                        <span class="performance-value">${campaign.display_value}</span>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', campaignHtml);
+            });
+        }
+
+        // Kanal performansını render et
+        function renderChannelPerformance(performances) {
+            const container = document.getElementById('channelPerformanceContainer');
+            // Başlığı koru, yükleme mesajını kaldır
+            container.querySelector('.text-center').remove();
+            
+            performances.forEach(performance => {
+                const performanceHtml = `
+                    <div class="performance-item">
+                        <span class="performance-label">${performance.name}</span>
+                        <span class="performance-value">${performance.display_value}</span>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', performanceHtml);
+            });
+        }
+
+        // Anahtar metrikleri render et
+        function renderKeyMetrics(metrics) {
+            const container = document.getElementById('keyMetricsContainer');
+            // Başlığı koru, yükleme mesajını kaldır
+            container.querySelector('.text-center').remove();
+            
+            metrics.forEach(metric => {
+                const metricHtml = `
+                    <div class="performance-item">
+                        <span class="performance-label">${metric.name}</span>
+                        <span class="performance-value">${metric.display_value}</span>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', metricHtml);
+            });
+        }
+
+        // Hata mesajlarını göster
+        function showErrorMessages() {
+            const errorHtml = `
+                <div class="col-12 text-center py-5 text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <p>Veriler yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.</p>
+                    <button onclick="location.reload()" class="btn btn-primary mt-3">
+                        <i class="fas fa-sync-alt me-2"></i>Sayfayı Yenile
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('mainMetricsContainer').innerHTML = errorHtml;
+            document.querySelectorAll('.chart-container, .performance-list').forEach(el => {
+                el.innerHTML += `
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Veriler yüklenemedi</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

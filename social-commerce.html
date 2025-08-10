@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sosyal Ticaret Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dashboard-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .dashboard-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin: 5px 0 0 0;
+        }
+        
+        .home-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+        }
+        
+        .metric-label {
+            color: #718096;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        
+        .metric-trend {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        
+        .trend-positive {
+            background: #e6fffa;
+            color: #065f46;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        /* Bottom Section Styling */
+        .bottom-section-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .platform-item, .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .platform-item:last-child, .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .platform-name, .metric-name {
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+        
+        .platform-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .metric-value-small {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .value-342k { color: #e53e3e; }
+        .value-268k { color: #3182ce; }
+        .value-237k { color: #2d3748; }
+        
+        .value-47 { color: #2d3748; }
+        .value-284k { color: #3182ce; }
+        .value-840 { color: #38a169; }
+        
+        .value-1847 { color: #2d3748; }
+        .value-673 { color: #3182ce; }
+        .value-348 { color: #d69e2e; }
+        
+        .value-24567 { color: #3182ce; }
+        .value-3247 { color: #38a169; }
+        .value-892 { color: #e53e3e; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="dashboard-title">Sosyal Ticaret Dashboard</h1>
+                <p class="dashboard-subtitle">Sosyal Medya Satışları ve Influencer Marketing Performansı</p>
+            </div>
+            <a href="dashboard.html" class="home-btn">
+                <i class="fas fa-home me-2"></i>Anasayfa
+            </a>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- Main Metrics Row -->
+            <div class="row mb-4" id="mainMetrics">
+                <!-- Metrics will be loaded here -->
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row">
+                <!-- Platform Performance Chart -->
+                <div class="col-lg-7 mb-4">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Platform Bazında Satış Performansı</h3>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="platformChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Funnel Chart -->
+                <div class="col-lg-5 mb-4">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Sosyal Ticaret Funnel Analizi</h3>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="funnelChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Metrics Row - New Design -->
+            <div class="row" id="bottomSectionCards">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // API Base URL
+        const API_BASE_URL = 'http://localhost:5000/api/social';
+        
+        // Color schemes for different metrics
+        const iconColors = {
+            social_media_sales: '#e53e3e',
+            conversion_rate: '#d53f8c',
+            roi: '#f6ad55',
+            engagement_rate: '#4299e1',
+            instagram_sales: '#e53e3e',
+            facebook_sales: '#4299e1',
+            tiktok_sales: '#2d3748',
+            active_influencers: '#805ad5',
+            avg_reach: '#38b2ac',
+            cpm: '#48bb78',
+            ugc_posts: '#ed8936',
+            hashtag_usage: '#9f7aea',
+            mention_rate: '#4299e1',
+            shares: '#38b2ac',
+            customer_photos: '#ed8936',
+            video_reviews: '#e53e3e'
+        };
+
+        const platformColors = {
+            'Instagram': '#e53e3e',
+            'Facebook': '#4299e1', 
+            'TikTok': '#2d3748',
+            'YouTube': '#e53e3e',
+            'Pinterest': '#d53f8c'
+        };
+
+        // Icon mappings
+        const iconMappings = {
+            social_media_sales: 'fas fa-chart-line',
+            conversion_rate: 'fas fa-heart',
+            roi: 'fas fa-star',
+            engagement_rate: 'fas fa-thumbs-up',
+            instagram_sales: 'fab fa-instagram',
+            facebook_sales: 'fab fa-facebook',
+            tiktok_sales: 'fab fa-tiktok',
+            active_influencers: 'fas fa-users',
+            avg_reach: 'fas fa-broadcast-tower',
+            cpm: 'fas fa-dollar-sign',
+            ugc_posts: 'fas fa-images',
+            hashtag_usage: 'fas fa-hashtag',
+            mention_rate: 'fas fa-at',
+            shares: 'fas fa-share',
+            customer_photos: 'fas fa-camera',
+            video_reviews: 'fas fa-video'
+        };
+
+        // Label mappings
+        const labelMappings = {
+            social_media_sales: 'Sosyal Medya Satışları',
+            conversion_rate: 'Sosyal Dönüşüm Oranı',
+            roi: 'Influencer ROI',
+            engagement_rate: 'Engagement Oranı',
+            instagram_sales: 'Instagram',
+            facebook_sales: 'Facebook',
+            tiktok_sales: 'TikTok',
+            active_influencers: 'Aktif Influencer',
+            avg_reach: 'Ortalama Reach',
+            cpm: 'CPM',
+            ugc_posts: 'UGC Posts',
+            hashtag_usage: 'Hashtag Kullanımı',
+            mention_rate: 'Mention Oranı',
+            shares: 'Sosyal Paylaşım',
+            customer_photos: 'Müşteri Fotoğrafları',
+            video_reviews: 'Video Yorumları'
+        };
+
+        // Fetch data from API
+        async function fetchCategoryData(category) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${category}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${category} data:`, error);
+                return [];
+            }
+        }
+
+        // Create metric card HTML
+        function createMetricCard(metric) {
+            const iconClass = iconMappings[metric.metric_name] || 'fas fa-chart-bar';
+            const iconColor = iconColors[metric.metric_name] || '#4299e1';
+            const label = labelMappings[metric.metric_name] || metric.metric_name;
+            
+            let trendHtml = '';
+            if (metric.trend) {
+                trendHtml = `<span class="metric-trend trend-positive">
+                    <i class="fas fa-arrow-up me-1"></i>${metric.trend}
+                </span>`;
+            }
+
+            return `
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background-color: ${iconColor};">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <h2 class="metric-value">${metric.unit}${metric.metric_value}</h2>
+                        <p class="metric-label">${label}</p>
+                        ${trendHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create bottom section cards from API data
+        function createBottomSectionCards(platformPerformance, influencerMetrics, ugcMetrics, socialProof) {
+            // Platform Performance Card
+            const platformCard = `
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="bottom-section-card">
+                        <h4 class="section-title">En İyi Performans Platformları</h4>
+                        ${platformPerformance.map(metric => `
+                            <div class="platform-item">
+                                <span class="platform-name">${labelMappings[metric.metric_name] || metric.metric_name}</span>
+                                <span class="platform-value" style="color: ${iconColors[metric.metric_name] || '#2d3748'};">${metric.unit}${metric.metric_value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Influencer Performance Card
+            const influencerCard = `
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="bottom-section-card">
+                        <h4 class="section-title">Influencer Performansı</h4>
+                        ${influencerMetrics.map(metric => `
+                            <div class="metric-item">
+                                <span class="metric-name">${labelMappings[metric.metric_name] || metric.metric_name}</span>
+                                <span class="metric-value-small" style="color: ${iconColors[metric.metric_name] || '#2d3748'};">${metric.unit}${metric.metric_value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // UGC Metrics Card
+            const ugcCard = `
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="bottom-section-card">
+                        <h4 class="section-title">Kullanıcı İçeriği Metrikleri</h4>
+                        ${ugcMetrics.map(metric => `
+                            <div class="metric-item">
+                                <span class="metric-name">${labelMappings[metric.metric_name] || metric.metric_name}</span>
+                                <span class="metric-value-small" style="color: ${iconColors[metric.metric_name] || '#2d3748'};">${metric.unit}${metric.metric_value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Social Proof Card
+            const socialProofCard = `
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="bottom-section-card">
+                        <h4 class="section-title">Sosyal Kanıt Etkisi</h4>
+                        ${socialProof.map(metric => `
+                            <div class="metric-item">
+                                <span class="metric-name">${labelMappings[metric.metric_name] || metric.metric_name}</span>
+                                <span class="metric-value-small" style="color: ${iconColors[metric.metric_name] || '#2d3748'};">${metric.unit}${metric.metric_value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            return platformCard + influencerCard + ugcCard + socialProofCard;
+        }
+        // Create platform performance chart - bar chart olarak
+        function createPlatformChart(platformData) {
+            const ctx = document.getElementById('platformChart').getContext('2d');
+            
+            // Convert API data to chart format
+            const chartData = platformData.map(metric => ({
+                label: labelMappings[metric.metric_name] || metric.metric_name,
+                value: parseFloat(metric.metric_value.toString().replace(/[^0-9.]/g, '')),
+                color: iconColors[metric.metric_name] || '#4299e1'
+            }));
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(d => d.label),
+                    datasets: [{
+                        label: 'Satış (K₺)',
+                        data: chartData.map(d => d.value),
+                        backgroundColor: chartData.map(d => d.color),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '₺' + context.parsed.y + 'K';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₺' + value + 'K';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create funnel chart - görseldeki gibi azalan çizgi
+        async function createFunnelChart() {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            
+            try {
+                // API'den funnel verilerini çek
+                const response = await fetch('http://localhost:5000/api/social/funnel_analysis');
+                const apiData = await response.json();
+                
+                // Verileri sırala ve formatla
+                const sortedData = apiData.sort((a, b) => a.display_order - b.display_order);
+                const funnelData = sortedData.map(item => ({
+                    label: item.metric_name,
+                    value: parseFloat(item.metric_value) / 1000 // K birimi için 1000'e böl
+                }));
+
+                // Grafik oluştur
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: funnelData.map(d => d.label),
+                        datasets: [{
+                            label: 'Funnel Analysis (K)',
+                            data: funnelData.map(d => d.value),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + 'K';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: Math.max(...funnelData.map(d => d.value)) * 1.2, // %20 fazlasını al
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + 'K';
+                                    },
+                                    stepSize: Math.ceil(Math.max(...funnelData.map(d => d.value)) / 5) // Otomatik step size
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Funnel verisi alınırken hata:', error);
+                // Hata durumunda fallback veri kullan
+                createFallbackFunnelChart();
+            }
+        }
+
+        function createFallbackFunnelChart() {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            const funnelData = [
+                { label: 'Impressions', value: 16.0 },
+                { label: 'Likes', value: 14.0 },
+                { label: 'Shares', value: 10.0 },
+                { label: 'Clicks', value: 8.0 },
+                { label: 'Add to Cart', value: 2.0 },
+                { label: 'Purchases', value: 1.0 }
+            ];
+
+            new Chart(ctx, {
+                // ... (mevcut fallback kodu buraya)
+            });
+        }
+
+        // Load all dashboard data
+        async function loadDashboard() {
+            try {
+                // Fetch all categories
+                const [socialCommerce, platformPerformance, influencerMetrics, ugcMetrics, socialProof] = await Promise.all([
+                    fetchCategoryData('social_commerce'),
+                    fetchCategoryData('platform_performance'),
+                    fetchCategoryData('influencer_metrics'),
+                    fetchCategoryData('ugc_metrics'),
+                    fetchCategoryData('social_proof')
+                ]);
+
+                // Populate main metrics (social_commerce)
+                const mainMetricsHtml = socialCommerce.map(metric => createMetricCard(metric)).join('');
+                document.getElementById('mainMetrics').innerHTML = mainMetricsHtml;
+
+                // Create platform performance chart with API data
+                createPlatformChart(platformPerformance);
+
+                // Create funnel chart with API data (now async)
+                await createFunnelChart();
+
+                // Create bottom section cards with API data
+                const bottomSectionHtml = createBottomSectionCards(
+                    platformPerformance, 
+                    influencerMetrics, 
+                    ugcMetrics, 
+                    socialProof
+                );
+                document.getElementById('bottomSectionCards').innerHTML = bottomSectionHtml;
+
+                // Hide loading spinner and show content
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                
+                // Hide loading spinner
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                // Show error message
+                document.getElementById('dashboardContent').innerHTML = `
+                    <div class="alert alert-danger mx-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Hata!</strong> Veriler yüklenirken bir sorun oluştu. 
+                        Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.
+                        <div class="mt-2">${error.message}</div>
+                    </div>
+                `;
+                
+                // Attempt to create charts with fallback data
+                try {
+                    createPlatformChart([]); // Will use fallback data
+                    createFunnelChart();     // Will use fallback data
+                } catch (chartError) {
+                    console.error('Error creating fallback charts:', chartError);
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>

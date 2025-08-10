@@ -1,0 +1,167 @@
+/* Genel Renk Paleti ve Fontlar */
+:root {
+    --dark-purple-bg: #1A1A2E; /* Ana arka plan */
+    --card-bg-dark: #0F3460; /* Kart arka planı (daha koyu) */
+    --card-bg-light: #16213E; /* İçerik wrapper / alternatif kart arka planı */
+    --text-light: #F0F0F0; /* Açık renk metin */
+    --text-muted: #A0A0A0; /* Soluk metin */
+    --primary-purple: #886FE4; /* Ana vurgu rengi (grafik çizgisi, bazı elementler) */
+    --secondary-purple: #E0B8FF; /* İkincil mor tonu (grafik dolgu, bazı legendler) */
+    --accent-green: #28A745; /* Başarı rengi (badge için) */
+    --accent-green-light: #D4EDDA; /* Başarı renginin açık tonu */
+    --chart-grid-color: rgba(255, 255, 255, 0.1); /* Grafik grid çizgileri */
+    --border-color-subtle: rgba(255, 255, 255, 0.05); /* Çok hafif kenarlık */
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--dark-purple-bg);
+    color: var(--text-light);
+    min-height: 100vh; /* Sayfanın tamamını kaplamasını sağlar */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.dashboard-wrapper {
+    background-color: var(--card-bg-light); /* Ana içeriğin arka planı */
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); /* Daha belirgin gölge */
+    max-width: 1400px; /* Maksimum genişlik, ortalamak için */
+    width: 100%;
+}
+
+.dashboard-title {
+    color: var(--text-light);
+    font-weight: 700;
+    font-size: 2.2rem;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem; /* Daha fazla boşluk */
+}
+
+/* Metrik Kartları */
+.dashboard-metric-card {
+    background: var(--card-bg-dark); /* Koyu kart arka planı */
+    border: 1px solid var(--border-color-subtle);
+    border-radius: 10px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.dashboard-metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-metric-card .card-title {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.dashboard-metric-card .card-text {
+    color: var(--text-light);
+    font-size: 2.2rem; /* Daha büyük ve belirgin */
+    font-weight: 700;
+}
+
+/* Yüzdesel Değişim Badge */
+.badge.bg-success-gradient {
+    background: linear-gradient(45deg, #28a745, #218838); /* Hafif gradyan */
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.4em 0.7em;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+/* Grafik Kartları */
+.dashboard-chart-card {
+    background: var(--card-bg-dark); /* Koyu kart arka planı */
+    border: 1px solid var(--border-color-subtle);
+    border-radius: 10px;
+    padding: 25px;
+}
+
+.dashboard-chart-card .card-title {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* En Çok Satan Ürünler */
+.product-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+.product-item:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Hover efekti */
+}
+
+.product-icon-img {
+    width: 65px; /* Daha büyük ikon */
+    height: 65px; /* Daha büyük ikon */
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.1); /* Hafif çerçeve */
+    padding: 2px; /* Çerçeve ve içeriği ayırır */
+    transition: transform 0.2s ease;
+}
+.product-item:hover .product-icon-img {
+    transform: scale(1.05);
+}
+
+.product-name {
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+.product-price {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+/* Chart.js Özelleştirmeleri (JS dosyasında da güncellemeler var) */
+/* Canvas elemanları için genel stil, arka planı şeffaf yapar */
+canvas {
+    background-color: transparent !important;
+}
+
+/* Responsive Düzenlemeler */
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.8rem;
+    }
+    .dashboard-subtitle {
+        font-size: 0.95rem;
+    }
+    .dashboard-metric-card .card-text {
+        font-size: 1.8rem;
+    }
+    .dashboard-wrapper {
+        padding: 20px;
+    }
+    .product-icon-img {
+        width: 50px;
+        height: 50px;
+    }
+    .product-name {
+        font-size: 0.9rem;
+    }
+    .product-price {
+        font-size: 0.75rem;
+    }
+}

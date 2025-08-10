@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finansal KPI Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            color: white;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-title h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .home-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-trend {
+            font-size: 0.9rem;
+            font-weight: bold;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .trend-positive { color: #27ae60; }
+        .trend-negative { color: #e74c3c; }
+        
+        .icon-green { background: #e8f5e8; color: #27ae60; }
+        .icon-blue { background: #e3f2fd; color: #2196f3; }
+        .icon-purple { background: #f3e5f5; color: #9c27b0; }
+        .icon-orange { background: #fff3e0; color: #ff9800; }
+        
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-name {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-card {
+            background: #f8d7da;
+            color: #721c24;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        /* Chart.js özelleştirmeleri */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .trend-chart-container {
+            position: relative;
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <h4>Finansal veriler yükleniyor...</h4>
+    </div>
+    
+    <div id="error" class="error-card d-none">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+        <h5>Veriler yüklenirken bir hata oluştu</h5>
+        <p>Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</p>
+        <button class="btn btn-outline-danger" onclick="refreshData()">
+            <i class="fas fa-refresh me-2"></i>Tekrar Dene
+        </button>
+    </div>
+    
+    <div id="dashboard-content" class="d-none">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">
+                <h1>Finansal KPI Dashboard</h1>
+                <div class="dashboard-subtitle">Karlılık, Nakit Akışı ve Finansal Sağlık Analizi</div>
+            </div>
+            <a href="dashboard.html" class="home-btn">
+                <i class="fas fa-home me-2"></i>Anasayfa
+            </a>
+        </div>
+        
+        <!-- Ana KPI Kartları -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-trend" id="gross-margin-trend">-</div>
+                    <div class="kpi-icon icon-green">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="kpi-value" id="gross-margin-value">-</div>
+                    <div class="kpi-label">Brüt Kar Marjı</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-trend" id="cash-flow-trend">-</div>
+                    <div class="kpi-icon icon-blue">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="kpi-value" id="cash-flow-value">-</div>
+                    <div class="kpi-label">Nakit Akışı</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-trend" id="roi-trend">-</div>
+                    <div class="kpi-icon icon-purple">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="kpi-value" id="roi-value">-</div>
+                    <div class="kpi-label">ROI Oranı</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-trend" id="cost-trend">-</div>
+                    <div class="kpi-icon icon-orange">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="kpi-value" id="cost-value">-</div>
+                    <div class="kpi-label">Toplam Operasyonel Maliyet</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grafikler -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-title">Gelir Dağılımı</div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-title">Finansal Trend (Son 6 Ay)</div>
+                    <div class="trend-chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detaylı Metrikler -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="chart-card">
+                    <div class="chart-title">Karlılık Metrikleri</div>
+                    <div id="profitability-metrics"></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="chart-card">
+                    <div class="chart-title">Maliyet Dağılımı</div>
+                    <div id="cost-metrics"></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="chart-card">
+                    <div class="chart-title">Nakit Akışı</div>
+                    <div id="cashflow-metrics"></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="chart-card">
+                    <div class="chart-title">Finansal Sağlık</div>
+                    <div id="health-metrics"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api/financial_metrics';
+        
+        const categoryConfig = {
+            'profitability': { name: 'Karlılık', icon: 'fas fa-arrow-trend-up' },
+            'cash_flow': { name: 'Nakit Akışı', icon: 'fas fa-money-bill-wave' },
+            'costs': { name: 'Maliyetler', icon: 'fas fa-receipt' },
+            'revenue_distribution': { name: 'Gelir Dağılımı', icon: 'fas fa-chart-pie' },
+            'profitability_metrics': { name: 'Karlılık Metrikleri', icon: 'fas fa-percentage' },
+            'cost_distribution': { name: 'Maliyet Dağılımı', icon: 'fas fa-chart-bar' },
+            'cash_flow_breakdown': { name: 'Nakit Akışı Detayı', icon: 'fas fa-stream' },
+            'financial_health': { name: 'Finansal Sağlık', icon: 'fas fa-heartbeat' }
+        };
+        
+        const metricNames = {
+            'gross_profit_margin': 'Brüt Kar Marjı',
+            'cash_flow': 'Nakit Akışı',
+            'roi': 'Yatırım Getirisi',
+            'operational_cost': 'Operasyonel Maliyet',
+            'product_sales': 'Ürün Satışları',
+            'service_revenue': 'Hizmet Gelirleri',
+            'shipping_revenue': 'Kargo Gelirleri',
+            'other_revenue': 'Diğer Gelirler',
+            'net_profit_margin': 'Net Kar Marjı',
+            'ebitda': 'EBITDA',
+            'roas': 'ROAS',
+            'cogs': 'Satışların Maliyeti',
+            'marketing': 'Pazarlama',
+            'operational': 'Operasyonel',
+            'operational_cash': 'Operasyonel',
+            'investment_cash': 'Yatırım',
+            'financing_cash': 'Finansman',
+            'current_ratio': 'Cari Oran',
+            'debt_to_equity': 'Borç/Özkaynak',
+            'growth_rate': 'Büyüme Oranı'
+        };
+        
+        let allMetrics = [];
+        
+        async function loadFinancialData() {
+            try {
+                const categories = Object.keys(categoryConfig);
+                const promises = categories.map(category => 
+                    fetch(`${API_BASE_URL}/${category}`).then(response => response.json())
+                );
+                
+                const results = await Promise.all(promises);
+                allMetrics = results.flat();
+                
+                displayMainKPIs(allMetrics);
+                displayCharts(allMetrics);
+                displayDetailedMetrics(allMetrics);
+                
+                document.getElementById('loading').classList.add('d-none');
+                document.getElementById('dashboard-content').classList.remove('d-none');
+                
+            } catch (error) {
+                console.error('Veri yükleme hatası:', error);
+                document.getElementById('loading').classList.add('d-none');
+                document.getElementById('error').classList.remove('d-none');
+            }
+        }
+        
+        function displayMainKPIs(data) {
+            const grossMargin = data.find(m => m.metric_name === 'gross_profit_margin');
+            const cashFlow = data.find(m => m.metric_name === 'cash_flow');
+            const roi = data.find(m => m.metric_name === 'roi');
+            const operationalCost = data.find(m => m.metric_name === 'operational_cost');
+            
+            if (grossMargin) {
+                document.getElementById('gross-margin-value').textContent = `${grossMargin.metric_value}%`;
+                document.getElementById('gross-margin-trend').textContent = grossMargin.trend || '';
+                document.getElementById('gross-margin-trend').className = `kpi-trend ${getTrendClass(grossMargin.trend)}`;
+            }
+            
+            if (cashFlow) {
+                document.getElementById('cash-flow-value').textContent = `₺${cashFlow.metric_value}${cashFlow.unit}`;
+                document.getElementById('cash-flow-trend').textContent = cashFlow.trend || '';
+                document.getElementById('cash-flow-trend').className = `kpi-trend ${getTrendClass(cashFlow.trend)}`;
+            }
+            
+            if (roi) {
+                document.getElementById('roi-value').textContent = `${roi.metric_value}%`;
+                document.getElementById('roi-trend').textContent = roi.trend || '';
+                document.getElementById('roi-trend').className = `kpi-trend ${getTrendClass(roi.trend)}`;
+            }
+            
+            if (operationalCost) {
+                document.getElementById('cost-value').textContent = `₺${operationalCost.metric_value}${operationalCost.unit}`;
+                document.getElementById('cost-trend').textContent = '+12.3%'; // Statik trend
+                document.getElementById('cost-trend').className = 'kpi-trend trend-negative';
+            }
+        }
+        
+        function getTrendClass(trend) {
+            if (!trend) return '';
+            return trend.startsWith('+') ? 'trend-positive' : 'trend-negative';
+        }
+        
+        function displayCharts(data) {
+            // Gelir dağılımı grafiği
+            const revenueData = data.filter(m => m.category === 'revenue_distribution');
+            if (revenueData.length > 0) {
+                createRevenueChart(revenueData);
+            }
+            
+            // Trend grafiği (örnek veri)
+            createTrendChart();
+        }
+        
+        function createRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart')?.getContext('2d');
+            if (!ctx || !data || data.length === 0) {
+                console.error('Grafik oluşturulamadı: veri veya canvas bulunamadı');
+                return;
+            }
+
+            // Veri hazırlama
+            const labels = data.map(d => 
+                d.metric_name === 'product_sales' ? 'Ürün Satışları' :
+                d.metric_name === 'service_revenue' ? 'Hizmet Gelirleri' :
+                d.metric_name === 'shipping_revenue' ? 'Kargo Gelirleri' :
+                'Diğer Gelirler'
+            );
+            
+            const chartData = data.map(d => {
+                const value = parseFloat(d.metric_value);
+                return isNaN(value) ? 0 : value;
+            });
+
+            // Renk paleti (dinamik uzunluk için)
+            const backgroundColors = [
+                '#4f46e5', '#7c3aed', '#ec4899', '#f59e0b',
+                '#10b981', '#3b82f6', '#ef4444', '#84cc16'
+            ].slice(0, data.length);
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: { 
+                                    size: 12,
+                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            // Örnek trend verisi
+            const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
+            const gelirData = [2.3, 2.4, 2.2, 2.8, 2.7, 2.8];
+            const karData = [11, 11.5, 12, 12.5, 12.8, 13];
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Gelir (M)',
+                        data: gelirData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Net Kar (%)',
+                        data: karData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayDetailedMetrics(data) {
+            // Verileri unique hale getir (metric_name'e göre)
+            const uniqueData = [];
+            const seenMetrics = new Set();
+            
+            data.forEach(metric => {
+                if (!seenMetrics.has(metric.metric_name)) {
+                    seenMetrics.add(metric.metric_name);
+                    uniqueData.push(metric);
+                }
+            });
+
+            // Karlılık metrikleri
+            const profitabilityData = uniqueData.filter(m => m.category === 'profitability_metrics');
+            displayMetricGroup('profitability-metrics', profitabilityData);
+            
+            // Diğer gruplar aynı şekilde
+            const costData = uniqueData.filter(m => m.category === 'cost_distribution');
+            displayMetricGroup('cost-metrics', costData);
+            
+            const cashflowData = uniqueData.filter(m => m.category === 'cash_flow_breakdown');
+            displayMetricGroup('cashflow-metrics', cashflowData);
+            
+            const healthData = uniqueData.filter(m => m.category === 'financial_health');
+            displayMetricGroup('health-metrics', healthData);
+        }
+        
+        function displayMetricGroup(containerId, metrics) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = metrics.map(metric => {
+                const displayName = metricNames[metric.metric_name] || metric.metric_name;
+                const value = `${metric.metric_value}${metric.unit ? metric.unit : ''}`;
+                const trendClass = getTrendClass(metric.trend);
+                const trendValue = metric.trend || '';
+                
+                return `
+                    <div class="metric-item">
+                        <div>
+                            <div class="metric-name">${displayName}</div>
+                            ${trendValue ? `<small class="${trendClass}">${trendValue}</small>` : ''}
+                        </div>
+                        <div class="metric-value">${value}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function refreshData() {
+            document.getElementById('dashboard-content').classList.add('d-none');
+            document.getElementById('error').classList.add('d-none');
+            document.getElementById('loading').classList.remove('d-none');
+            loadFinancialData();
+        }
+        
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFinancialData();
+        });
+    </script>
+</body>
+</html>

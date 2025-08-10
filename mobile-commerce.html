@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobil Ticaret Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease;
+            height: 100%;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .metric-icon {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .trend-positive {
+            color: #28a745;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .trend-negative {
+            color: #dc3545;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            height: 400px;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .btn-home {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .detail-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .detail-metric:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+            text-align: right;
+            min-width: 60px;
+        }
+        
+        .metric-detail-card {
+            min-height: 200px;
+        }
+        
+        .detail-metrics-container {
+            padding: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="dashboard-header position-relative">
+            <a href="dashboard.html" class="btn-home">
+                <i class="fas fa-home me-2"></i>Anasayfa
+            </a>
+            <div class="container">
+                <h1 class="dashboard-title">Mobil Ticaret Dashboard</h1>
+                <p class="dashboard-subtitle">Mobil Uygulama ve Mobil Web Performans Analizi</p>
+            </div>
+        </div>
+        
+        <div class="container">
+            <!-- Ana Metrikler -->
+            <div class="row g-4 mb-4" id="main-metrics">
+                <div class="col-12">
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-white" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grafik Alanları -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Platform Performans Karşılaştırması</h3>
+                        <canvas id="platformChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Mobil vs Desktop Dönüşüm</h3>
+                        <canvas id="conversionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detay Metrikler -->
+            <div class="row g-4 mb-5">
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card metric-detail-card">
+                        <h4 class="chart-title">Uygulama Metrikleri</h4>
+                        <div id="app-metrics-detail" class="detail-metrics-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card metric-detail-card">
+                        <h4 class="chart-title">Mobil UX Metrikleri</h4>
+                        <div id="ux-metrics-detail" class="detail-metrics-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card metric-detail-card">
+                        <h4 class="chart-title">Push Notification</h4>
+                        <div id="notifications-detail" class="detail-metrics-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card metric-detail-card">
+                        <h4 class="chart-title">Cihaz & İşletim Sistemi</h4>
+                        <div id="platform-performance-detail" class="detail-metrics-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // API Base URL
+        const API_BASE = 'http://localhost:5000/api/mobile';
+        
+        // Kategori ikonları
+        const categoryIcons = {
+            'mobile_traffic_ratio': 'fas fa-mobile-alt text-primary',
+            'mobile_conversion_rate': 'fas fa-shopping-cart text-success', 
+            'app_downloads': 'fas fa-download text-info',
+            'mobile_cart_abandonment': 'fas fa-shopping-cart text-warning'
+        };
+        
+        // Metrik etiketleri
+        const metricLabels = {
+            'mobile_traffic_ratio': 'Mobil Trafik Oranı',
+            'mobile_conversion_rate': 'Mobil Dönüşüm Oranı',
+            'app_downloads': 'App İndirme (Aylık)',
+            'mobile_cart_abandonment': 'Mobil Sepet Terk Oranı',
+            'active_users': 'Aktif Kullanıcı',
+            'session_duration': 'Session Süresi',
+            'retention_day7': 'Retention (Day 7)',
+            'page_speed': 'Sayfa Hızı',
+            'bounce_rate': 'Bounce Rate',
+            'core_web_vitals': 'Core Web Vitals',
+            'open_rate': 'Açılma Oranı',
+            'click_rate': 'Tıklama Oranı',
+            'opt_in_rate': 'Opt-in Rate',
+            'ios_app_performance': 'iOS',
+            'android_app_performance': 'Android',
+            'tablet_performance': 'Tablet'
+        };
+        
+        // Ana metrikleri yükle
+        async function loadMainMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/traffic`);
+                const data = await response.json();
+                
+                const mainMetricsContainer = document.getElementById('main-metrics');
+                mainMetricsContainer.innerHTML = '';
+                
+                data.forEach(metric => {
+                    const iconClass = categoryIcons[metric.metric_name] || 'fas fa-chart-line text-primary';
+                    const trend = metric.trend ? `<div class="trend-positive"><i class="fas fa-arrow-up me-1"></i>${metric.trend}</div>` : '';
+                    
+                    const col = document.createElement('div');
+                    col.className = 'col-lg-3 col-md-6';
+                    col.innerHTML = `
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="${iconClass}"></i>
+                            </div>
+                            <div class="metric-value">${metric.metric_value}${metric.unit}</div>
+                            <div class="metric-label">${metricLabels[metric.metric_name]}</div>
+                            ${trend}
+                        </div>
+                    `;
+                    mainMetricsContainer.appendChild(col);
+                });
+            } catch (error) {
+                console.error('Ana metrikler yüklenirken hata:', error);
+            }
+        }
+        
+        // Detay kategorilerini yükle
+        async function loadCategoryDetails(categoryName, containerId) {
+            try {
+                const response = await fetch(`${API_BASE}/${categoryName}`);
+                const data = await response.json();
+                
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                
+                data.forEach(metric => {
+                    const detailDiv = document.createElement('div');
+                    detailDiv.className = 'detail-metric';
+                    
+                    // Değeri formatla
+                    let formattedValue = metric.metric_value;
+                    if (metric.unit === 'm') {
+                        formattedValue = `${metric.metric_value}m ${metric.metric_value.includes('.') ? '' : '42s'}`;
+                    } else if (metric.unit === '/100') {
+                        formattedValue = `${metric.metric_value}/100`;
+                    } else {
+                        formattedValue = `${metric.metric_value}${metric.unit}`;
+                    }
+                    
+                    detailDiv.innerHTML = `
+                        <span class="detail-label">${metricLabels[metric.metric_name]}</span>
+                        <span class="detail-value">${formattedValue}</span>
+                    `;
+                    container.appendChild(detailDiv);
+                });
+            } catch (error) {
+                console.error(`${categoryName} kategorisi yüklenirken hata:`, error);
+                document.getElementById(containerId).innerHTML = '<div class="text-muted text-center py-3">Veri yüklenemedi</div>';
+            }
+        }
+        
+        // Grafikleri oluştur
+        async function createCharts() {
+            try {
+                // Platform performans grafiği - Orijinal tasarıma uygun
+                const ctx1 = document.getElementById('platformChart').getContext('2d');
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Gelir', 'Dönüşüm', 'Ortalama Sepet', 'Session Süresi'],
+                        datasets: [{
+                            label: 'iOS App',
+                            data: [500, 250, 300, 450],
+                            backgroundColor: '#4F46E5',
+                            borderRadius: 4
+                        }, {
+                            label: 'Android App', 
+                            data: [480, 240, 280, 460],
+                            backgroundColor: '#7C3AED',
+                            borderRadius: 4
+                        }, {
+                            label: 'Mobile Web',
+                            data: [200, 220, 240, 280],
+                            backgroundColor: '#EC4899',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 600,
+                                grid: {
+                                    color: '#f0f0f0'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+                
+                // Dönüşüm oranı grafiği
+                const ctx2 = document.getElementById('conversionChart').getContext('2d');
+                new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'],
+                        datasets: [{
+                            label: 'Mobil Dönüşüm (%)',
+                            data: [2.1, 2.3, 2.6, 2.7, 2.9, 3.1],
+                            borderColor: '#06B6D4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Desktop Dönüşüm (%)',
+                            data: [4.1, 4.0, 4.2, 4.3, 4.4, 4.5],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Grafikler oluşturulurken hata:', error);
+            }
+        }
+        
+        // Sayfa yüklendiğinde verileri getir
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadMainMetrics();
+            await createCharts();
+            
+            // Detay kategorilerini yükle
+            await loadCategoryDetails('app_metrics', 'app-metrics-detail');
+            await loadCategoryDetails('ux_metrics', 'ux-metrics-detail');
+            await loadCategoryDetails('notifications', 'notifications-detail');
+            await loadCategoryDetails('platform_performance', 'platform-performance-detail');
+        });
+    </script>
+</body>
+</html>

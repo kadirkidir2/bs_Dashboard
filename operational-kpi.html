@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operasyonel KPI Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .home-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .kpi-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .kpi-trend {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        
+        .trend-positive {
+            color: #28a745;
+        }
+        
+        .trend-negative {
+            color: #dc3545;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px; /* Grafik yüksekliğini küçülttük */
+            width: 100%;
+        }
+        
+        .icon-delivery { color: #28a745; }
+        .icon-accuracy { color: #17a2b8; }
+        .icon-error { color: #ffc107; }
+        .icon-warehouse { color: #6f42c1; }
+        .icon-orders { color: #fd7e14; }
+        .icon-auto { color: #20c997; }
+        .icon-manual { color: #6c757d; }
+        .icon-returns { color: #e83e8c; }
+        .icon-supply { color: #007bff; }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+        }
+        
+        .error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        
+        /* Mobil uyumluluk için ek stiller */
+        @media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 1.8rem;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            .kpi-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="d-flex justify-content-between align-items-center dashboard-header">
+            <div>
+                <h1 class="dashboard-title">Operasyonel KPI Dashboard</h1>
+                <p class="dashboard-subtitle">Sipariş İşleme, Teslimat ve Operasyonel Verimlilik Analizi</p>
+            </div>
+            <a href="dashboard.html" class="home-btn">
+                <i class="fas fa-home me-2"></i>Anasayfa
+            </a>
+        </div>
+
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+            <p>Veriler yükleniyor...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="error-message"></span>
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- Ana KPI Kartları -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="kpi-card text-center">
+                        <i class="fas fa-clock kpi-icon icon-delivery"></i>
+                        <div class="kpi-value" id="processing-time">-</div>
+                        <div class="kpi-label">Sipariş İşleme Süresi</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="kpi-card text-center">
+                        <i class="fas fa-truck kpi-icon icon-accuracy"></i>
+                        <div class="kpi-value" id="delivery-accuracy">-</div>
+                        <div class="kpi-label">Teslimat Doğruluğu</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="kpi-card text-center">
+                        <i class="fas fa-exclamation-circle kpi-icon icon-error"></i>
+                        <div class="kpi-value" id="error-rate">-</div>
+                        <div class="kpi-label">İade Oranı</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="kpi-card text-center">
+                        <i class="fas fa-warehouse kpi-icon icon-warehouse"></i>
+                        <div class="kpi-value" id="warehouse-efficiency">-</div>
+                        <div class="kpi-label">Depo Verimliliği</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafikler -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Sipariş İşleme Süreci Performansı</h3>
+                        <div class="chart-container">
+                            <canvas id="orderProcessChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Teslimat Performansı Trendi</h3>
+                        <div class="chart-container">
+                            <canvas id="deliveryTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detay KPI Kartları -->
+            <div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Sipariş Yönetimi</h3>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Günlük Sipariş</span>
+                                <span class="fw-bold text-primary" id="daily-orders">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Otomatik İşleme</span>
+                                <span class="fw-bold text-success" id="auto-processing">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Manuel Müdahale</span>
+                                <span class="fw-bold text-warning" id="manual-intervention">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">İade İşlem Süreci</h3>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">İade İşleme Süresi</span>
+                                <span class="fw-bold text-info" id="return-processing">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Geri Ödeme Süresi</span>
+                                <span class="fw-bold text-primary" id="refund-time">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">İade Doğruluğu</span>
+                                <span class="fw-bold text-success" id="return-accuracy">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Tedarik Zinciri KPI</h3>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Lead Time</span>
+                                <span class="fw-bold text-warning" id="lead-time">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Order Fill Rate</span>
+                                <span class="fw-bold text-success" id="fill-rate">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Cost per Order</span>
+                                <span class="fw-bold text-primary" id="cost-per-order">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Facility Performance</h3>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Ocak</span>
+                                <span class="fw-bold text-success" id="january-performance">-</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Şubat</span>
+                                <span class="fw-bold text-success" id="february-performance">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let orderProcessChart = null;
+        let deliveryTrendChart = null;
+
+        // API'den veri çekme fonksiyonu
+        async function fetchData(category) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/operational/${category}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${category} data:`, error);
+                throw error;
+            }
+        }
+
+        // Tüm verileri çek
+        async function loadAllData() {
+            try {
+                const categories = ['order_processing', 'order_steps', 'facility_performance', 'fulfillment', 'returns', 'supply_chain'];
+                const allData = {};
+
+                for (const category of categories) {
+                    allData[category] = await fetchData(category);
+                }
+
+                return allData;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Ana KPI'ları güncelle
+        function updateMainKPIs(data) {
+            const orderProcessing = data.order_processing;
+            
+            if (orderProcessing) {
+                const processingTime = orderProcessing.find(item => item.metric_name === 'processing_time');
+                const deliveryAccuracy = orderProcessing.find(item => item.metric_name === 'delivery_accuracy');
+                const errorRate = orderProcessing.find(item => item.metric_name === 'error_rate');
+
+                if (processingTime) {
+                    document.getElementById('processing-time').textContent = processingTime.metric_value + ' ' + processingTime.unit;
+                }
+                if (deliveryAccuracy) {
+                    document.getElementById('delivery-accuracy').textContent = deliveryAccuracy.metric_value + deliveryAccuracy.unit;
+                }
+                if (errorRate) {
+                    document.getElementById('error-rate').textContent = errorRate.metric_value + errorRate.unit;
+                }
+            }
+
+            const facilityPerf = data.facility_performance;
+            if (facilityPerf && facilityPerf.length > 0) {
+                const latestPerf = facilityPerf[facilityPerf.length - 1];
+                document.getElementById('warehouse-efficiency').textContent = latestPerf.metric_value + latestPerf.unit;
+            }
+        }
+
+        // Detay KPI'ları güncelle
+        function updateDetailKPIs(data) {
+            const fulfillment = data.fulfillment;
+            if (fulfillment) {
+                const dailyOrders = fulfillment.find(item => item.metric_name === 'daily_orders');
+                const autoProcessing = fulfillment.find(item => item.metric_name === 'auto_processing');
+                const manualIntervention = fulfillment.find(item => item.metric_name === 'manual_intervention');
+
+                if (dailyOrders) {
+                    document.getElementById('daily-orders').textContent = dailyOrders.metric_value;
+                }
+                if (autoProcessing) {
+                    document.getElementById('auto-processing').textContent = autoProcessing.metric_value + autoProcessing.unit;
+                }
+                if (manualIntervention) {
+                    document.getElementById('manual-intervention').textContent = manualIntervention.metric_value + manualIntervention.unit;
+                }
+            }
+
+            const returns = data.returns;
+            if (returns) {
+                const processingTime = returns.find(item => item.metric_name === 'processing_time');
+                const refundTime = returns.find(item => item.metric_name === 'refund_time');
+                const accuracy = returns.find(item => item.metric_name === 'accuracy');
+
+                if (processingTime) {
+                    document.getElementById('return-processing').textContent = processingTime.metric_value + ' ' + processingTime.unit;
+                }
+                if (refundTime) {
+                    document.getElementById('refund-time').textContent = refundTime.metric_value + ' ' + refundTime.unit;
+                }
+                if (accuracy) {
+                    document.getElementById('return-accuracy').textContent = accuracy.metric_value + accuracy.unit;
+                }
+            }
+
+            const supplyChain = data.supply_chain;
+            if (supplyChain) {
+                const leadTime = supplyChain.find(item => item.metric_name === 'lead_time');
+                const fillRate = supplyChain.find(item => item.metric_name === 'fill_rate');
+                const costPerOrder = supplyChain.find(item => item.metric_name === 'cost_per_order');
+
+                if (leadTime) {
+                    document.getElementById('lead-time').textContent = leadTime.metric_value + ' ' + leadTime.unit;
+                }
+                if (fillRate) {
+                    document.getElementById('fill-rate').textContent = fillRate.metric_value + fillRate.unit;
+                }
+                if (costPerOrder) {
+                    document.getElementById('cost-per-order').textContent = costPerOrder.unit + costPerOrder.metric_value;
+                }
+            }
+
+            const facilityPerf = data.facility_performance;
+            if (facilityPerf) {
+                const january = facilityPerf.find(item => item.metric_name === 'january');
+                const february = facilityPerf.find(item => item.metric_name === 'february');
+
+                if (january) {
+                    document.getElementById('january-performance').textContent = january.metric_value + january.unit;
+                }
+                if (february) {
+                    document.getElementById('february-performance').textContent = february.metric_value + february.unit;
+                }
+            }
+        }
+
+        // Order Process Chart oluştur
+        function createOrderProcessChart(data) {
+            const ctx = document.getElementById('orderProcessChart').getContext('2d');
+            
+            if (orderProcessChart) {
+                orderProcessChart.destroy();
+            }
+
+            const orderSteps = data.order_steps;
+            if (!orderSteps) return;
+
+            const labels = orderSteps.map(item => {
+                const labelMap = {
+                    'payment_processing': 'Ödeme İşleme',
+                    'inventory_check': 'Stok Kontrolü',
+                    'packaging': 'Paketleme',
+                    'shipping': 'Kargo'
+                };
+                return labelMap[item.metric_name] || item.metric_name;
+            });
+
+            const values = orderSteps.map(item => parseFloat(item.metric_value));
+
+            orderProcessChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' dk';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Delivery Trend Chart oluştur
+        function createDeliveryTrendChart(data) {
+            const ctx = document.getElementById('deliveryTrendChart').getContext('2d');
+            
+            if (deliveryTrendChart) {
+                deliveryTrendChart.destroy();
+            }
+
+            const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
+            const deliveryData = [94, 92.8, 96, 97, 98.5, 97.8];
+            const satisfactionData = [91, 93, 95, 94.5, 95, 94.5];
+
+            deliveryTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Zamanında Teslimat (%)',
+                        data: deliveryData,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }, {
+                        label: 'Müşteri Memnuniyeti (%)',
+                        data: satisfactionData,
+                        borderColor: 'rgba(32, 201, 151, 1)',
+                        backgroundColor: 'rgba(32, 201, 151, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(32, 201, 151, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 88,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Hata gösterme fonksiyonu
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // Ana yükleme fonksiyonu
+        async function initDashboard() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'none';
+
+                const data = await loadAllData();
+                
+                updateMainKPIs(data);
+                updateDetailKPIs(data);
+                createOrderProcessChart(data);
+                createDeliveryTrendChart(data);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Dashboard yükleme hatası:', error);
+                showError('Veriler yüklenirken bir hata oluştu. Lütfen sayfayı yenilemeyi deneyin.');
+            }
+        }
+
+        // Sayfa yüklendiğinde dashboard'u başlat
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // 30 saniyede bir veriyi güncelle
+        setInterval(initDashboard, 30000);
+    </script>
+</body>
+</html>

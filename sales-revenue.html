@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satış & Gelir Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .dashboard-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+        }
+        .metric-card {
+            text-align: center;
+            padding: 20px 10px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .positive-change {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .negative-change {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .product-name {
+            font-weight: 500;
+        }
+        .product-sales {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="container">
+            <h1>Satış & Gelir Dashboard</h1>
+            <p class="text-muted">Temel Gelir Metrikleri ve Satış Performansı</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Top Metrics Row -->
+        <div class="row" id="top-metrics-row">
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Gelir Trendi (Son 6 Ay)</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Kanallara Göre Satış</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="salesChannelChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Row -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">En Çok Satan Ürünler</div>
+                    <div class="card-body" id="top-products-container">
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global chart references
+        let revenueChart, salesChannelChart;
+
+        // Format number with Turkish locale
+        function formatNumber(num) {
+            return new Intl.NumberFormat('tr-TR').format(num);
+        }
+
+        // Format percentage
+        function formatPercentage(num) {
+            return num.toLocaleString('tr-TR', { 
+                style: 'percent',
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            });
+        }
+
+        // Format currency
+        function formatCurrency(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toLocaleString('tr-TR', { 
+                    maximumFractionDigits: 1 
+                }) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toLocaleString('tr-TR', { 
+                    maximumFractionDigits: 1 
+                }) + 'K';
+            }
+            return formatNumber(num);
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Revenue Trend Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Sales Channel Chart
+            const salesChannelCtx = document.getElementById('salesChannelChart').getContext('2d');
+            salesChannelChart = new Chart(salesChannelCtx, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Load top metrics
+        async function loadTopMetrics() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/sales_revenue/top_metrics');
+                const metrics = await response.json();
+                
+                const container = document.getElementById('top-metrics-row');
+                container.innerHTML = '';
+                
+                // Group metrics into rows of 4
+                for (let i = 0; i < metrics.length; i += 4) {
+                    const row = document.createElement('div');
+                    row.className = 'row';
+                    
+                    for (let j = i; j < i + 4 && j < metrics.length; j++) {
+                        const metric = metrics[j];
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3';
+                        
+                        const trendClass = metric.trend > 0 ? 'positive-change' : 
+                                         metric.trend < 0 ? 'negative-change' : '';
+                        
+                        col.innerHTML = `
+                            <div class="card metric-card">
+                                <div class="metric-value ${trendClass}">${metric.display_value}</div>
+                                <div class="metric-label">${metric.name}</div>
+                            </div>
+                        `;
+                        
+                        row.appendChild(col);
+                    }
+                    
+                    container.appendChild(row);
+                }
+            } catch (error) {
+                console.error('Error loading top metrics:', error);
+                document.getElementById('top-metrics-row').innerHTML = `
+                    <div class="alert alert-danger">
+                        Metrikler yüklenirken hata oluştu: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Load revenue trend data
+        async function loadRevenueTrend() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/sales_revenue/revenue_trend');
+                const trends = await response.json();
+                
+                // Group by subtype (channel)
+                const grouped = {};
+                trends.forEach(item => {
+                    if (!grouped[item.subtype]) {
+                        grouped[item.subtype] = [];
+                    }
+                    grouped[item.subtype].push(item);
+                });
+                
+                // Sort by date and extract labels (months)
+                const months = [...new Set(trends.map(item => item.name))].sort((a, b) => {
+                    const monthOrder = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
+                    return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+                });
+                
+                // Prepare chart data
+                const datasets = [];
+                const colors = [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)'
+                ];
+                
+                let colorIndex = 0;
+                for (const [channel, data] of Object.entries(grouped)) {
+                    const sortedData = data.sort((a, b) => months.indexOf(a.name) - months.indexOf(b.name));
+                    datasets.push({
+                        label: channel,
+                        data: sortedData.map(item => item.value / 1000), // Convert to thousands
+                        backgroundColor: colors[colorIndex % colors.length],
+                        borderColor: colors[colorIndex % colors.length],
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: colorIndex === 0
+                    });
+                    colorIndex++;
+                }
+                
+                // Update chart
+                revenueChart.data.labels = months;
+                revenueChart.data.datasets = datasets;
+                revenueChart.options.scales.y.ticks = {
+                    callback: function(value) {
+                        return value + 'K';
+                    }
+                };
+                revenueChart.update();
+                
+                // Prepare sales channel data
+                const channelData = [];
+                const channelLabels = [];
+                for (const [channel, data] of Object.entries(grouped)) {
+                    const total = data.reduce((sum, item) => sum + item.value, 0);
+                    channelLabels.push(channel);
+                    channelData.push(total);
+                }
+                
+                // Update sales channel chart
+                salesChannelChart.data.labels = channelLabels;
+                salesChannelChart.data.datasets = [{
+                    data: channelData,
+                    backgroundColor: colors.slice(0, channelLabels.length),
+                    borderWidth: 1
+                }];
+                salesChannelChart.update();
+                
+            } catch (error) {
+                console.error('Error loading revenue trend:', error);
+            }
+        }
+
+        // Load top products
+        async function loadTopProducts() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/sales_revenue/top_products');
+                const products = await response.json();
+                
+                const container = document.getElementById('top-products-container');
+                container.innerHTML = '';
+                
+                products.forEach(product => {
+                    const item = document.createElement('div');
+                    item.className = 'product-item';
+                    item.innerHTML = `
+                        <span class="product-name">${product.name}</span>
+                        <span class="product-sales">${formatNumber(product.value)}</span>
+                    `;
+                    container.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error loading top products:', error);
+                document.getElementById('top-products-container').innerHTML = `
+                    <div class="alert alert-danger">
+                        Ürünler yüklenirken hata oluştu: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            initCharts();
+            await Promise.all([
+                loadTopMetrics(),
+                loadRevenueTrend(),
+                loadTopProducts()
+            ]);
+        });
+    </script>
+</body>
+</html>

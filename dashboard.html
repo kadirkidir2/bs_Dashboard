@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .analytics-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            height: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .analytics-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+        
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            color: white;
+            font-size: 1.8rem;
+        }
+        
+        .icon-green { background: linear-gradient(135deg, #4CAF50, #45a049); }
+        .icon-blue { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .icon-purple { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .icon-gray { background: linear-gradient(135deg, #607D8B, #455A64); }
+        .icon-red { background: linear-gradient(135deg, #F44336, #D32F2F); }
+        .icon-indigo { background: linear-gradient(135deg, #3F51B5, #303F9F); }
+        .icon-pink { background: linear-gradient(135deg, #E91E63, #C2185B); }
+        .icon-orange { background: linear-gradient(135deg, #FF9800, #F57C00); }
+        .icon-dark { background: linear-gradient(135deg, #424242, #212121); }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .card-description {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .container-fluid {
+            padding: 2rem;
+        }
+        
+        .main-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 3rem;
+            font-weight: 300;
+            font-size: 2.5rem;
+        }
+        
+        .welcome-section {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .welcome-text {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin: 0;
+        }
+        
+        .user-name {
+            color: #FFD700;
+            font-weight: 600;
+        }
+        
+        .welcome-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .analytics-card {
+                margin-bottom: 1.5rem;
+                padding: 1.5rem;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Hoş Geldin Bölümü -->
+        <div class="welcome-section text-center">
+            <h2 class="welcome-text">Hoş geldin, <span class="user-name">Ahmet Yılmaz</span>!</h2>
+            <p class="welcome-subtitle">Analytics dashboard'ına erişim sağladın. Hangi analizi incelemek istiyorsun?</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Satış & Gelir -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('sales-revenue')">
+                    <div class="icon-circle icon-green">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="card-title">Satış & Gelir</h3>
+                    <p class="card-description">
+                        Toplam satış, gelir trendi, dönüşüm oranları
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Müşteri Analizi -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('customer-analytics')">
+                    <div class="icon-circle icon-blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="card-title">Müşteri Analizi</h3>
+                    <p class="card-description">
+                        CLV, segmentasyon, müşteri davranışları
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Pazarlama ROI -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('marketing-roi')">
+                    <div class="icon-circle icon-purple">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <h3 class="card-title">Pazarlama ROI</h3>
+                    <p class="card-description">
+                        Kanal performansı, ROAS, kampanya etkinliği
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Stok Yönetimi -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('inventory-management')">
+                    <div class="icon-circle icon-gray">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h3 class="card-title">Stok Yönetimi</h3>
+                    <p class="card-description">
+                        Stok seviyesi, devir hızı, tedarik analizi
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Site Performansı -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('website-performance')">
+                    <div class="icon-circle icon-red">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="card-title">Site Performansı</h3>
+                    <p class="card-description">
+                        Hız, uptime, SEO, kullanıcı deneyimi
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Ürün Analizi -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('product-analytics')">
+                    <div class="icon-circle icon-indigo">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <h3 class="card-title">Ürün Analizi</h3>
+                    <p class="card-description">
+                        En çok satan, kategori performansı, fiyat analizi
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Müşteri Hizmetleri -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('customer-service')">
+                    <div class="icon-circle icon-gray">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="card-title">Müşteri Hizmetleri</h3>
+                    <p class="card-description">
+                        Destek talepleri, memnuniyet, çözüm süreleri
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Finansal KPI -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('financial-kpi')">
+                    <div class="icon-circle icon-orange">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3 class="card-title">Finansal KPI</h3>
+                    <p class="card-description">
+                        Karlılık, nakit akışı, maliyet analizi
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Mobil Ticaret -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('mobile-commerce')">
+                    <div class="icon-circle icon-pink">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="card-title">Mobil Ticaret</h3>
+                    <p class="card-description">
+                        Mobil satışlar, uygulama performansı
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Sosyal Ticaret -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('social-commerce')">
+                    <div class="icon-circle icon-blue">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h3 class="card-title">Sosyal Ticaret</h3>
+                    <p class="card-description">
+                        Sosyal medya satışları, influencer ROI
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Operasyonel KPI -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('operational-kpi')">
+                    <div class="icon-circle icon-dark">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3 class="card-title">Operasyonel KPI</h3>
+                    <p class="card-description">
+                        Sipariş işleme, teslimat, verimlilik
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Rekabet Analizi -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card analytics-card" onclick="navigateToPage('competitive-analysis')">
+                    <div class="icon-circle icon-purple">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="card-title">Rekabet Analizi</h3>
+                    <p class="card-description">
+                        Pazar payı, fiyat karşılaştırması
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function navigateToPage(pageName) {
+            // Direkt sayfaya yönlendirme
+            window.location.href = `${pageName}.html`;
+        }
+        
+        // Sayfa yüklendiğinde hoş geldin efekti
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeSection = document.querySelector('.welcome-section');
+            welcomeSection.style.opacity = '0';
+            welcomeSection.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                welcomeSection.style.transition = 'all 0.8s ease';
+                welcomeSection.style.opacity = '1';
+                welcomeSection.style.transform = 'translateY(0)';
+            }, 300);
+        });
+    </script>
+</body>
+</html>

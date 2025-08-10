@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Hizmetleri Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .channel-performance-table {
+            width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .channel-row {
+            display: flex;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .channel-header {
+            font-weight: bold;
+            background-color: #f8f9fa;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .channel-name {
+            flex: 1;
+            color: #495057;
+        }
+
+        .channel-value {
+            flex: 1;
+            text-align: right;
+            color: #212529;
+            font-family: 'Courier New', monospace;
+        }
+
+        .channel-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #6c757d;
+            padding: 15px;
+        }
+
+        .dashboard-container {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dashboard-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .dashboard-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 0;
+        }
+        
+        .page-indicator {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-card .card-body {
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .metric-icon {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 1.2rem;
+            color: #667eea;
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-top: 10px;
+            line-height: 1;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .trend-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .trend-up {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+        
+        .trend-down {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+        
+        .trend-neutral {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+        
+        .chart-card .card-header {
+            background: transparent;
+            border: none;
+            padding: 20px 20px 0 20px;
+        }
+        
+        .chart-card .card-body {
+            padding: 20px;
+        }
+        
+        .chart-title {
+            color: #2d3748;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            height: 100%;
+        }
+        
+        .info-card .card-header {
+            background: transparent;
+            border: none;
+            padding: 20px 20px 15px 20px;
+        }
+        
+        .info-card .card-body {
+            padding: 0 20px 20px 20px;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .category-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .category-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        
+        .category-label {
+            flex: 1;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .category-percentage {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .status-resolved { color: #16a34a; }
+        .status-pending { color: #d97706; }
+        .status-escalated { color: #dc2626; }
+        
+        .no-data {
+            color: #718096;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error-message {
+            color: #dc2626;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-indicator">9 / 15</div>
+    
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1 class="dashboard-title">Müşteri Hizmetleri Dashboard</h1>
+                        <p class="dashboard-subtitle">Destek Performansı, Memnuniyet ve Çözüm Süreçleri Analizi</p>
+                    </div>
+                    <a href="dashboard.html" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-house-door me-2"></i>
+                        Anasayfa
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ana Metrikler -->
+            <div class="row mb-4 g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="card metric-card">
+                        <i class="fas fa-ticket-alt metric-icon"></i>
+                        <div class="card-body">
+                            <div class="metric-value" id="active-tickets">--</div>
+                            <div class="metric-label">Aktif Destek Talepleri</div>
+                            <div class="trend-indicator trend-neutral" id="active-tickets-trend">Veri Yok</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card metric-card">
+                        <i class="fas fa-clock metric-icon"></i>
+                        <div class="card-body">
+                            <div class="metric-value" id="avg-response">--</div>
+                            <div class="metric-label">Ortalama Yanıt Süresi</div>
+                            <div class="trend-indicator trend-neutral" id="response-trend">Veri Yok</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card metric-card">
+                        <i class="fas fa-smile metric-icon"></i>
+                        <div class="card-body">
+                            <div class="metric-value" id="satisfaction">--</div>
+                            <div class="metric-label">Memnuniyet Skoru</div>
+                            <div class="trend-indicator trend-neutral" id="satisfaction-trend">Veri Yok</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card metric-card">
+                        <i class="fas fa-check-circle metric-icon"></i>
+                        <div class="card-body">
+                            <div class="metric-value" id="first-call">--</div>
+                            <div class="metric-label">İlk Çağrı Çözümü</div>
+                            <div class="trend-indicator trend-neutral">Veri Yok</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ana Grafikler -->
+            <div class="row g-4 mb-4">
+                <!-- Talep Hacmi Trendi -->
+                <div class="col-lg-7">
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">Talep Hacmi Trendi (Son 7 Gün)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="trendChart"></canvas>
+                                <div id="trendChartError" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Talep Kategorileri Dağılımı -->
+                <div class="col-lg-5">
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">Talep Kategorileri Dağılımı</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="categoryChart"></canvas>
+                                <div id="categoryChartError" class="error-message" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alt Metrikler -->
+            <div class="row g-4">
+                <!-- Kanal Performansı -->
+                <div class="col-lg-3">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">Kanal Performansı</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="channel-performance-table">
+                                <div class="channel-row channel-header">
+                                    <div class="channel-name">Kanal</div>
+                                    <div class="channel-value">Ortalama Yanıt Süresi</div>
+                                </div>
+                                <div id="channel-performance-data"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temsilci Performansı -->
+                <div class="col-lg-3">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">Temsilci Performansı</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list" id="agent-performance">
+                                <li class="no-data">Veri yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLA Metrikleri -->
+                <div class="col-lg-3">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">SLA Metrikleri</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list" id="sla-metrics">
+                                <li class="no-data">Veri yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Çözüm Durumu -->
+                <div class="col-lg-3">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h5 class="chart-title">Çözüm Durumu</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list" id="resolution-status">
+                                <li class="no-data">Veri yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API Base URL
+        const API_BASE_URL = 'http://localhost:5000/api/customer_service';
+
+        // Chart variables
+        let trendChart, categoryChart;
+
+        // Grafikleri oluştur
+        document.addEventListener('DOMContentLoaded', function() {
+        // Trend Grafiği
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
+                datasets: [
+                    {
+                        label: 'Yeni Talepler',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    },
+                    {
+                        label: 'Çözülen Talepler',
+                        data: [],
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#48bb78',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Kategori Grafiği (Donut Chart)
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sipariş Sorunu', 'Ürün Sorunu', 'Kargo', 'Fatura', 'Ödeme', 'Diğer'],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#ed64a6',
+                        '#9f7aea',
+                        '#63b3ed',
+                        '#68d391'
+                    ],
+                    borderWidth: 0,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length === 0) return [];
+                                return data.labels.map((label, i) => ({
+                                    text: `${label} (${data.datasets[0].data[i]}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    pointStyle: 'circle'
+                                }));
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // API'den verileri çek
+        loadDashboardData();
+        });
+
+        // API'den veri çekme fonksiyonları
+        async function loadDashboardData() {
+            try {
+                // Genel metrikleri yükle
+                const generalResponse = await fetch(`${API_BASE_URL}/general`);
+                if (!generalResponse.ok) throw new Error('Genel metrikler yüklenemedi');
+                const generalData = await generalResponse.json();
+                updateGeneralMetrics(generalData);
+
+                // Trend verilerini yükle
+                const trendResponse = await fetch(`${API_BASE_URL}/trend`);
+                if (!trendResponse.ok) throw new Error('Trend verileri yüklenemedi');
+                const trendData = await trendResponse.json();
+                processTrendData(trendData);
+
+                // Kanal performansını yükle
+                const channelResponse = await fetch(`${API_BASE_URL}/channel`);
+                if (!channelResponse.ok) throw new Error('Kanal performansı yüklenemedi');
+                const channelData = await channelResponse.json();
+                updateChannelPerformance(channelData);
+
+                // Temsilci performansını yükle
+                const agentResponse = await fetch(`${API_BASE_URL}/agent`);
+                if (!agentResponse.ok) throw new Error('Temsilci performansı yüklenemedi');
+                const agentData = await agentResponse.json();
+                updateAgentPerformance(agentData);
+
+                // Kategori dağılımını yükle
+                const categoryResponse = await fetch(`${API_BASE_URL}/ticket_category`);
+                if (!categoryResponse.ok) throw new Error('Kategori dağılımı yüklenemedi');
+                const categoryData = await categoryResponse.json();
+                processCategoryData(categoryData);
+
+                // SLA metriklerini yükle
+                const slaResponse = await fetch(`${API_BASE_URL}/sla`);
+                if (!slaResponse.ok) throw new Error('SLA metrikleri yüklenemedi');
+                const slaData = await slaResponse.json();
+                updateSlaMetrics(slaData);
+
+                // Çözüm durumunu yükle
+                const resolutionResponse = await fetch(`${API_BASE_URL}/resolution`);
+                if (!resolutionResponse.ok) throw new Error('Çözüm durumu yüklenemedi');
+                const resolutionData = await resolutionResponse.json();
+                updateResolutionStatus(resolutionData);
+
+            } catch (error) {
+                console.error('Veri yükleme hatası:', error);
+                showErrorMessages(error.message);
+            }
+        }
+
+        // Yeni eklenen fonksiyon: Trend verilerini işle
+        function processTrendData(data) {
+            if (!data || !Array.isArray(data)) {
+                console.error('Trend verileri geçersiz:', data);
+                document.getElementById('trendChartError').textContent = 'Trend verileri yüklenemedi';
+                document.getElementById('trendChartError').style.display = 'block';
+                return;
+            }
+
+            try {
+                // Gün isimlerini Türkçe'ye çevirme
+                const dayNames = {
+                    'monday': 'Pazartesi',
+                    'tuesday': 'Salı',
+                    'wednesday': 'Çarşamba',
+                    'thursday': 'Perşembe',
+                    'friday': 'Cuma',
+                    'saturday': 'Cumartesi',
+                    'sunday': 'Pazar'
+                };
+
+                // Günleri sıralı şekilde almak için sıralama
+                const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                
+                // Etiketleri ve verileri hazırla
+                const labels = [];
+                const newTickets = [];
+                const resolvedTickets = [];
+
+                daysOrder.forEach(day => {
+                    const dayData = data.filter(item => item.name.includes(day));
+                    if (dayData.length > 0) {
+                        labels.push(dayNames[day] || day);
+                        
+                        const newTicket = dayData.find(item => item.name.includes('new'));
+                        newTickets.push(newTicket ? parseInt(newTicket.value) || 0 : 0);
+                        
+                        const resolvedTicket = dayData.find(item => item.name.includes('resolved'));
+                        resolvedTickets.push(resolvedTicket ? parseInt(resolvedTicket.value) || 0 : 0);
+                    }
+                });
+
+                // Grafiği güncelle
+                trendChart.data.labels = labels;
+                trendChart.data.datasets[0].data = newTickets;
+                trendChart.data.datasets[1].data = resolvedTickets;
+                trendChart.update();
+                document.getElementById('trendChartError').style.display = 'none';
+            } catch (error) {
+                console.error('Trend verileri işlenirken hata:', error);
+                document.getElementById('trendChartError').textContent = 'Trend verileri işlenemedi';
+                document.getElementById('trendChartError').style.display = 'block';
+            }
+        }
+
+        // Yeni eklenen fonksiyon: Kategori verilerini işle
+        function processCategoryData(data) {
+            if (!data || !Array.isArray(data)) {
+                console.error('Kategori verileri geçersiz:', data);
+                document.getElementById('categoryChartError').textContent = 'Kategori verileri yüklenemedi';
+                document.getElementById('categoryChartError').style.display = 'block';
+                return;
+            }
+
+            try {
+                // Kategori isimlerini Türkçe'ye çevirme
+                const categoryNames = {
+                    'order_issue': 'Sipariş Sorunu',
+                    'product_issue': 'Ürün Sorunu',
+                    'shipping': 'Kargo',
+                    'invoice': 'Fatura',
+                    'payment': 'Ödeme',
+                    'other': 'Diğer'
+                };
+
+                const labels = [];
+                const values = [];
+
+                data.forEach(item => {
+                    const categoryName = categoryNames[item.name] || item.name;
+                    labels.push(categoryName);
+                    values.push(parseInt(item.value) || 0);
+                });
+
+                // Grafiği güncelle
+                categoryChart.data.labels = labels;
+                categoryChart.data.datasets[0].data = values;
+                categoryChart.update();
+                document.getElementById('categoryChartError').style.display = 'none';
+            } catch (error) {
+                console.error('Kategori verileri işlenirken hata:', error);
+                document.getElementById('categoryChartError').textContent = 'Kategori verileri işlenemedi';
+                document.getElementById('categoryChartError').style.display = 'block';
+            }
+        }
+
+        // Diğer fonksiyonlar aynı kalıyor...
+        function showErrorMessages(message) {
+            // Genel hata mesajını göster
+            const errorElements = document.querySelectorAll('.no-data');
+            errorElements.forEach(el => {
+                el.textContent = 'Veri yüklenemedi';
+                el.style.color = '#dc2626';
+            });
+            
+            // Grafik hatalarını göster
+            document.getElementById('trendChartError').textContent = message;
+            document.getElementById('trendChartError').style.display = 'block';
+            
+            document.getElementById('categoryChartError').textContent = message;
+            document.getElementById('categoryChartError').style.display = 'block';
+        }
+
+        function updateGeneralMetrics(data) {
+            if (!data || !Array.isArray(data)) {
+                console.error('Genel metrik verileri geçersiz:', data);
+                return;
+            }
+
+            const activeTickets = data.find(d => d.name === 'active_tickets');
+            if (activeTickets) {
+                document.getElementById('active-tickets').textContent = activeTickets.value || '--';
+                const trendElement = document.getElementById('active-tickets-trend');
+                trendElement.textContent = activeTickets.trend || 'Veri Yok';
+                updateTrendIndicator(trendElement, activeTickets.trend);
+            }
+            
+            const avgResponse = data.find(d => d.name === 'avg_response_time');
+            if (avgResponse) {
+                const value = avgResponse.value ? `${avgResponse.value} <small style="font-size: 0.6em;">${avgResponse.unit || ''}</small>` : '--';
+                document.getElementById('avg-response').innerHTML = value;
+                const trendElement = document.getElementById('response-trend');
+                trendElement.textContent = avgResponse.trend || 'Veri Yok';
+                updateTrendIndicator(trendElement, avgResponse.trend);
+            }
+            
+            const satisfaction = data.find(d => d.name === 'satisfaction_score');
+            if (satisfaction) {
+                const value = satisfaction.value ? `${satisfaction.value}<small style="font-size: 0.6em;">${satisfaction.unit || ''}</small>` : '--';
+                document.getElementById('satisfaction').innerHTML = value;
+                const trendElement = document.getElementById('satisfaction-trend');
+                trendElement.textContent = satisfaction.trend || 'Veri Yok';
+                updateTrendIndicator(trendElement, satisfaction.trend);
+            }
+            
+            const firstCall = data.find(d => d.name === 'first_call_resolution');
+            if (firstCall) {
+                const value = firstCall.value ? `${firstCall.value}<small style="font-size: 0.6em;">${firstCall.unit || ''}</small>` : '--';
+                document.getElementById('first-call').innerHTML = value;
+            }
+        }
+
+        function updateTrendIndicator(element, trend) {
+            if (!element || !trend) {
+                element.className = 'trend-indicator trend-neutral';
+                return;
+            }
+
+            if (trend.includes('+')) {
+                element.className = 'trend-indicator trend-up';
+            } else if (trend.includes('-')) {
+                element.className = 'trend-indicator trend-down';
+            } else {
+                element.className = 'trend-indicator trend-neutral';
+            }
+        }
+
+        function updateChannelPerformance(data) {
+            const container = document.getElementById('channel-performance-data');
+            if (!container) return;
+            
+            if (!data || !Array.isArray(data)) {
+                container.innerHTML = '<div class="no-data">Kanal performans verileri yüklenemedi</div>';
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<div class="no-data">Kanal performans verisi bulunamadı</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // Verileri display_order'a göre sırala
+            data.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            data.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'channel-row channel-item';
+                
+                // Birimleri uygun şekilde formatla
+                let formattedValue = item.value;
+                if (item.unit === 'seconds' && item.value > 60) {
+                    formattedValue = `${(item.value/60).toFixed(1)} min`;
+                } else if (item.unit === 'minutes' && item.value > 60) {
+                    formattedValue = `${(item.value/60).toFixed(1)} hours`;
+                } else {
+                    formattedValue = `${item.value} ${item.unit}`;
+                }
+
+                // Türkçe kanal adları için dönüşüm
+                const channelNames = {
+                    'live_chat': 'Canlı Destek',
+                    'email': 'E-Posta',
+                    'phone': 'Telefon'
+                };
+                
+                const channelName = channelNames[item.name] || item.name;
+
+                row.innerHTML = `
+                    <div class="channel-name">${channelName}</div>
+                    <div class="channel-value">${formattedValue}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateAgentPerformance(data) {
+            const container = document.getElementById('agent-performance');
+            if (!container) return;
+            
+            if (!data || !Array.isArray(data)) {
+                container.innerHTML = '<li class="no-data">Temsilci performans verileri yüklenemedi</li>';
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<li class="no-data">Temsilci performans verisi bulunamadı</li>';
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'info-item';
+                li.innerHTML = `
+                    <span class="info-label">${item.metric || 'Bilinmeyen Metrik'}</span>
+                    <span class="info-value">${item.value || '--'}</span>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        function updateSlaMetrics(data) {
+            const container = document.getElementById('sla-metrics');
+            if (!container) return;
+            
+            if (!data || !Array.isArray(data)) {
+                container.innerHTML = '<li class="no-data">SLA metrikleri yüklenemedi</li>';
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<li class="no-data">SLA metrik verisi bulunamadı</li>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // API'den gelen veri yapısını eşleştir
+            const metricLabels = {
+                'sla_compliance': 'SLA Uyumu',
+                'under_4_hours': 'Hedef < 4 saat',
+                'delayed_tickets': 'Geciken Talepler'
+            };
+            
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'info-item';
+                const label = metricLabels[item.name] || item.name || 'Bilinmeyen Metrik';
+                let value = '--';
+                
+                if (item.value !== undefined && item.value !== null) {
+                    value = item.unit ? `${item.value}${item.unit}` : item.value;
+                }
+                
+                li.innerHTML = `
+                    <span class="info-label">${label}</span>
+                    <span class="info-value">${value}</span>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        function updateResolutionStatus(data) {
+            const container = document.getElementById('resolution-status');
+            if (!container) return;
+            
+            if (!data || !Array.isArray(data)) {
+                container.innerHTML = '<li class="no-data">Çözüm durumu verileri yüklenemedi</li>';
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<li class="no-data">Çözüm durumu verisi bulunamadı</li>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // Verileri order'a göre sırala
+            data.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'info-item';
+                let statusClass = '';
+                
+                // Durumları Türkçeleştir ve sınıfları ata
+                const statusMap = {
+                    'resolved': { text: 'Çözülen', class: 'status-resolved' },
+                    'pending': { text: 'Beklemede', class: 'status-pending' },
+                    'escalated': { text: 'Eskalasyon', class: 'status-escalated' }
+                };
+                
+                const statusInfo = statusMap[item.name] || { text: item.name, class: '' };
+                
+                li.innerHTML = `
+                    <span class="info-label">${statusInfo.text}</span>
+                    <span class="info-value ${statusInfo.class}">${item.value || '--'}</span>
+                `;
+                container.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
