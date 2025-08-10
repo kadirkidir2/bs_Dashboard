@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stok Yönetimi Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --dark-color: #2b2d42;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #3a0ca3 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+            height: 100%;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .metric-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .metric-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .metric-card.dark {
+            border-left-color: var(--dark-color);
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .metric-change.positive {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .metric-change.negative {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        /* DÜZELTME: chart-container için belirli bir yükseklik ayarlayın */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            /* height: 100%; /* Bu satırı KESİNLİKLE kaldırın */
+            height: 380px; /* Örnek yükseklik, ihtiyacınıza göre ayarlayın. Canvas height'dan biraz büyük olmalı */
+            position: relative; /* Chart.js responsive'liği için faydalı olabilir */
+            display: flex; /* Flexbox kullanımı için */
+            flex-direction: column; /* İçerik dikey olarak sıralanacak */
+        }
+
+        /* Canvas'ın konteynerin kalanını doldurması için */
+        .chart-wrapper {
+            flex-grow: 1; /* Mevcut alanı doldurmasını sağlar */
+            position: relative; /* Canvas'ın tamamen sığması için */
+        }
+        .chart-wrapper canvas {
+            position: absolute;
+            width: 100% !important;
+            height: 100% !important;
+            /* Inline height değerini override etmek için !important kullanıldı */
+            /* Chart.js'in kendi hesaplamasını yapmasına izin veriyoruz */
+        }
+
+
+        .performance-list {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+
+        .performance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .performance-item:last-child {
+            border-bottom: none;
+        }
+
+        .performance-label {
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .performance-value {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .home-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .home-btn:hover {
+            background: #3a56e8;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            vertical-align: text-bottom;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="dashboard-header text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-boxes me-2"></i>
+                Stok Yönetimi Dashboard
+            </h1>
+            <p class="mb-0 opacity-75">Envanter Kontrolü ve Tedarik Zinciri Analizi</p>
+        </div>
+
+        <div class="row mb-4" id="mainMetricsContainer">
+            <div class="col-12 text-center py-5">
+                <div class="loading-spinner text-primary"></div>
+                <p>Metrikler yükleniyor...</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-5">
+                <div class="chart-container">
+                    <h3 class="chart-title mb-3"> <i class="fas fa-chart-pie me-2"></i>
+                        Kategori Bazında Stok Seviyeleri
+                    </h3>
+                    <div class="chart-wrapper"> <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="performance-list" id="fastMovingContainer">
+                            <h3 class="chart-title">
+                                <i class="fas fa-bolt me-2"></i>
+                                En Hızlı Hareket Eden
+                            </h3>
+                            <div class="text-center py-3">
+                                <div class="loading-spinner text-primary"></div>
+                                <p>Veriler yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="performance-list" id="slowMovingContainer">
+                            <h3 class="chart-title">
+                                <i class="fas fa-turtle me-2"></i>
+                                Yavaş Hareket Eden
+                            </h3>
+                            <div class="text-center py-3">
+                                <div class="loading-spinner text-primary"></div>
+                                <p>Veriler yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container mt-4" id="trendChartContainer">
+                    <h3 class="chart-title mb-3"> <i class="fas fa-chart-line me-2"></i>
+                        Stok Performans Trendi
+                    </h3>
+                    <div class="chart-wrapper"> <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="performance-list" id="warehouseMetricsContainer">
+                    <h3 class="chart-title">
+                        <i class="fas fa-warehouse me-2"></i>
+                        Depo Metrikleri
+                    </h3>
+                    <div class="text-center py-3">
+                        <div class="loading-spinner text-primary"></div>
+                        <p>Veriler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="performance-list" id="supplyChainContainer">
+                    <h3 class="chart-title">
+                        <i class="fas fa-truck me-2"></i>
+                        Tedarik Zinciri
+                    </h3>
+                    <div class="text-center py-3">
+                        <div class="loading-spinner text-primary"></div>
+                        <p>Veriler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="chart-container" id="criticalStockContainer">
+                    <h3 class="chart-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Kritik Stok Durumu
+                    </h3>
+                    <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+                        <div class="text-center" id="criticalStockContent">
+                            <div class="loading-spinner text-primary"></div>
+                            <p>Veriler yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="dashboard.html" class="home-btn">
+                <i class="fas fa-home"></i>
+                Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // API Endpoint'leri
+        const API_BASE_URL = 'http://localhost:5000/api/inventory';
+        const API_ENDPOINTS = {
+            mainMetrics: `${API_BASE_URL}/main_metrics`,
+            categoryStocks: `${API_BASE_URL}/category_stocks`,
+            fastMoving: `${API_BASE_URL}/fast_moving`,
+            slowMoving: `${API_BASE_URL}/slow_moving`,
+            warehouseMetrics: `${API_BASE_URL}/warehouse_metrics`,
+            supplyChain: `${API_BASE_URL}/supply_chain`,
+            stockTrends: `${API_BASE_URL}/stock_trends`,
+            criticalStock: `${API_BASE_URL}/critical_stock` // Added for dynamic critical stock
+        };
+
+        // Grafik referansları
+        let categoryChart = null;
+        let trendChart = null; 
+
+        // Sayfa yüklendiğinde verileri çek
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMainMetrics();
+            loadCategoryStocks();
+            loadFastMoving();
+            loadSlowMoving();
+            loadWarehouseMetrics();
+            loadSupplyChain();
+            loadCriticalStock(); 
+            loadStockTrends();
+        });
+
+        // Ana metrikleri yükle
+        async function loadMainMetrics() {
+            try {
+                const response = await fetch(API_ENDPOINTS.mainMetrics);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const metrics = await response.json();
+                
+                const container = document.getElementById('mainMetricsContainer');
+                container.innerHTML = ''; 
+                
+                metrics.forEach(metric => {
+                    const metricHtml = `
+                        <div class="col-md-6 col-lg-3">
+                            <div class="metric-card ${getMetricCardClass(metric.id)}">
+                                ${metric.trend !== null ? `
+                                <div class="metric-change ${metric.trend >= 0 ? 'positive' : 'negative'}">
+                                    ${metric.trend >= 0 ? '+' : ''}${metric.trend}%
+                                </div>
+                                ` : ''}
+                                <div class="metric-value">${metric.display_value}</div>
+                                <div class="metric-label">${metric.name}</div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', metricHtml);
+                });
+            } catch (error) {
+                console.error('Ana metrikler yüklenirken hata:', error);
+                document.getElementById('mainMetricsContainer').innerHTML = `
+                    <div class="col-12 text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Metrikler yüklenirken hata oluştu</p>
+                        <button onclick="loadMainMetrics()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Metrik kartı sınıfını belirle
+        function getMetricCardClass(metricId) {
+            const classes = ['', 'success', 'warning', 'danger', 'dark'];
+            return classes[metricId % classes.length];
+        }
+
+        // Kategori stoklarını yükle
+        async function loadCategoryStocks() {
+            try {
+                const response = await fetch(API_ENDPOINTS.categoryStocks);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const stocks = await response.json();
+                
+                const labels = stocks.map(item => item.name);
+                const data = stocks.map(item => item.value);
+                const backgroundColors = stocks.map(item => item.color || '#4361ee');
+                
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                
+                if (categoryChart) {
+                    categoryChart.destroy();
+                }
+                
+                categoryChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Stok Miktarı',
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color + 'dd'),
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw * 1000}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value * 1000;
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Kategori stokları yüklenirken hata:', error);
+                document.getElementById('categoryChart').closest('.chart-container').innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Kategori Bazında Stok Seviyeleri
+                    </h3>
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Kategori stokları yüklenemedi</p>
+                        <button onclick="loadCategoryStocks()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Hızlı hareket edenleri yükle
+        async function loadFastMoving() {
+            try {
+                const response = await fetch(API_ENDPOINTS.fastMoving);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const items = await response.json();
+                
+                const container = document.getElementById('fastMovingContainer');
+                const loadingDiv = container.querySelector('.text-center');
+                if (loadingDiv) loadingDiv.remove();
+                
+                if (items.length === 0) {
+                    container.insertAdjacentHTML('beforeend', '<p class="text-muted text-center py-3">Veri bulunamadı.</p>');
+                    return;
+                }
+
+                items.forEach(item => {
+                    const itemHtml = `
+                        <div class="performance-item">
+                            <span class="performance-label">${item.name}</span>
+                            <span class="performance-value">${item.display_value}</span>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } catch (error) {
+                console.error('Hızlı hareket edenler yüklenirken hata:', error);
+                document.getElementById('fastMovingContainer').innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-bolt me-2"></i>
+                        En Hızlı Hareket Eden
+                    </h3>
+                    <div class="text-center py-3 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Veriler yüklenemedi</p>
+                        <button onclick="loadFastMoving()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Yavaş hareket edenleri yükle
+        async function loadSlowMoving() {
+            try {
+                const response = await fetch(API_ENDPOINTS.slowMoving);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const items = await response.json();
+                
+                const container = document.getElementById('slowMovingContainer');
+                const loadingDiv = container.querySelector('.text-center');
+                if (loadingDiv) loadingDiv.remove();
+
+                if (items.length === 0) {
+                    container.insertAdjacentHTML('beforeend', '<p class="text-muted text-center py-3">Veri bulunamadı.</p>');
+                    return;
+                }
+
+                items.forEach(item => {
+                    const itemHtml = `
+                        <div class="performance-item">
+                            <span class="performance-label">${item.name}</span>
+                            <span class="performance-value">${item.display_value}</span>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } catch (error) {
+                console.error('Yavaş hareket edenler yüklenirken hata:', error);
+                document.getElementById('slowMovingContainer').innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-turtle me-2"></i>
+                        Yavaş Hareket Eden
+                    </h3>
+                    <div class="text-center py-3 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Veriler yüklenemedi</p>
+                        <button onclick="loadSlowMoving()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Depo metriklerini yükle
+        async function loadWarehouseMetrics() {
+            try {
+                const response = await fetch(API_ENDPOINTS.warehouseMetrics);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const metrics = await response.json();
+                
+                const container = document.getElementById('warehouseMetricsContainer');
+                const loadingDiv = container.querySelector('.text-center');
+                if (loadingDiv) loadingDiv.remove();
+
+                if (metrics.length === 0) {
+                    container.insertAdjacentHTML('beforeend', '<p class="text-muted text-center py-3">Veri bulunamadı.</p>');
+                    return;
+                }
+
+                metrics.forEach(metric => {
+                    const metricHtml = `
+                        <div class="performance-item">
+                            <span class="performance-label">${metric.name}</span>
+                            <span class="performance-value">${metric.display_value}</span>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', metricHtml);
+                });
+            } catch (error) {
+                console.error('Depo metrikleri yüklenirken hata:', error);
+                document.getElementById('warehouseMetricsContainer').innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-warehouse me-2"></i>
+                        Depo Metrikleri
+                    </h3>
+                    <div class="text-center py-3 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Veriler yüklenemedi</p>
+                        <button onclick="loadWarehouseMetrics()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Tedarik zincirini yükle
+        async function loadSupplyChain() {
+            try {
+                const response = await fetch(API_ENDPOINTS.supplyChain);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const metrics = await response.json();
+                
+                const container = document.getElementById('supplyChainContainer');
+                const loadingDiv = container.querySelector('.text-center');
+                if (loadingDiv) loadingDiv.remove();
+
+                if (metrics.length === 0) {
+                    container.insertAdjacentHTML('beforeend', '<p class="text-muted text-center py-3">Veri bulunamadı.</p>');
+                    return;
+                }
+                
+                metrics.forEach(metric => {
+                    const metricHtml = `
+                        <div class="performance-item">
+                            <span class="performance-label">${metric.name}</span>
+                            <span class="performance-value">${metric.display_value}</span>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', metricHtml);
+                });
+            } catch (error) {
+                console.error('Tedarik zinciri yüklenirken hata:', error);
+                document.getElementById('supplyChainContainer').innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-truck me-2"></i>
+                        Tedarik Zinciri
+                    </h3>
+                    <div class="text-center py-3 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Veriler yüklenemedi</p>
+                        <button onclick="loadSupplyChain()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Kritik stok durumunu yükle
+        async function loadCriticalStock() {
+            const criticalStockContent = document.getElementById('criticalStockContent');
+            try {
+                const response = await fetch(API_ENDPOINTS.criticalStock);
+                if (!response.ok) throw new Error('API yanıtı başarısız');
+                const data = await response.json();
+
+                criticalStockContent.innerHTML = `
+                    <div class="mb-3">
+                        <span id="criticalStockValue" class="metric-value">${data.display_value}</span>
+                        <span class="metric-change ${data.trend >= 0 ? 'positive' : 'negative'}">
+                            ${data.trend >= 0 ? '+' : ''}${data.trend}%
+                        </span>
+                    </div>
+                    <div class="metric-label">${data.name}</div>
+                `;
+            } catch (error) {
+                console.error('Kritik stok yüklenirken hata:', error);
+                criticalStockContent.innerHTML = `
+                    <div class="text-center py-3 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Kritik stok bilgisi yüklenemedi</p>
+                        <button onclick="loadCriticalStock()" class="btn btn-sm btn-primary mt-2">Tekrar Dene</button>
+                    </div>
+                `;
+            }
+        }
+
+
+        // Stok trendlerini yükle - Büyük veri optimizasyonu
+        async function loadStockTrends() {
+            const chartContainerDiv = document.getElementById('trendChartContainer');
+            
+            // Clear previous content and show loading spinner
+            chartContainerDiv.innerHTML = `
+                <h3 class="chart-title mb-3">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Stok Performans Trendi
+                </h3>
+                <div class="text-center py-5 chart-wrapper"> <div class="loading-spinner text-primary"></div>
+                    <p class="mt-2">Stok trendleri yükleniyor...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.stockTrends);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                
+                const trends = await response.json();
+                
+                // Data size check and optimization
+                const MAX_DATA_POINTS = 100; 
+                let processedData = trends;
+                
+                if (trends.length > MAX_DATA_POINTS) {
+                    console.warn(`Large dataset detected (${trends.length} records). Sampling data...`);
+                    processedData = sampleData(trends, MAX_DATA_POINTS);
+                }
+                
+                // Recreate the canvas element
+                chartContainerDiv.innerHTML = `
+                    <h3 class="chart-title mb-3">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Stok Performans Trendi
+                    </h3>
+                    <div class="chart-wrapper">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                `;
+
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                
+                // Destroy previous chart instance if it exists
+                if (trendChart) { 
+                    trendChart.destroy();
+                }
+                
+                trendChart = new Chart(ctx, { 
+                    type: 'line',
+                    data: {
+                        labels: processedData.map(item => truncateLabel(item.name)),
+                        datasets: [{
+                            label: 'Stok Devir Hızı',
+                            data: processedData.map(item => parseFloat(item.value) || 0),
+                            borderColor: '#4361ee',
+                            backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: processedData.length > 50 ? 0 : 3, 
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: processedData.length > 50 ? 0 : 1000 
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const index = context[0].dataIndex;
+                                        return processedData[index].name;
+                                    },
+                                    label: function(context) {
+                                        return `Stok Devir Hızı: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                ticks: {
+                                    maxTicksLimit: 8, 
+                                    callback: function(value) {
+                                        return value.toFixed(1);
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxTicksLimit: 10, 
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                }
+                            }
+                        },
+                        elements: {
+                            point: {
+                                radius: function(context) {
+                                    return context.datasetIndex === 0 && processedData.length > 50 ? 0 : 3;
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                if (trends.length > MAX_DATA_POINTS) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'alert alert-info mt-2';
+                    warningDiv.innerHTML = `
+                        <i class="fas fa-info-circle"></i> 
+                        Toplam ${trends.length} veri noktasından ${MAX_DATA_POINTS} tanesi gösteriliyor.
+                    `;
+                    chartContainerDiv.appendChild(warningDiv);
+                }
+                
+            } catch (error) {
+                console.error('Stok trendleri yüklenirken hata:', error);
+                chartContainerDiv.innerHTML = `
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Stok Performans Trendi
+                    </h3>
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Stok trendleri yüklenemedi</p>
+                        <small class="text-muted">Hata: ${error.message}</small>
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadStockTrends()">
+                            <i class="fas fa-refresh"></i> Yeniden Dene
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function sampleData(data, maxPoints) {
+            if (data.length <= maxPoints) return data;
+            
+            const step = Math.floor(data.length / maxPoints);
+            const sampled = [];
+            
+            for (let i = 0; i < data.length; i += step) {
+                sampled.push(data[i]);
+            }
+            
+            if (sampled.length > 0 && sampled[sampled.length - 1] !== data[data.length - 1]) {
+                sampled.push(data[data.length - 1]);
+            }
+            
+            return sampled.slice(0, maxPoints); 
+        }
+
+        function truncateLabel(label, maxLength = 15) {
+            if (!label) return '';
+            return label.length > maxLength ? label.substring(0, maxLength) + '...' : label;
+        }
+
+        function destroyStockTrends() {
+            if (trendChart) { 
+                trendChart.destroy();
+                trendChart = null;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Analizi Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .metric-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+        .neutral { color: #6c757d; } /* Nötr durum için renk ekledik */
+
+        .header-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .btn-home {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 25px;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-home:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .page-indicator {
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-custom {
+            height: 8px;
+            border-radius: 10px;
+        }
+        
+        .icon-metric {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        /* Dinamik renkler için varsayılanlar, API'den gelecek renkleri kullanacağız */
+        .icon-blue { background: linear-gradient(45deg, #4285f4, #34a853); }
+        .icon-red { background: linear-gradient(45deg, #ea4335, #fbbc05); }
+        .icon-green { background: linear-gradient(45deg, #34a853, #4285f4); }
+        .icon-purple { background: linear-gradient(45deg, #9c27b0, #673ab7); }
+
+        /* Progress bar renkleri için Bootstrap sınıflarını kullanmaya devam edebiliriz veya dinamik hale getirebiliriz. */
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Müşteri Analizi Dashboard</h2>
+                    <p class="mb-0 opacity-75">Müşteri Davranışları ve Yaşam Döngüsü Metrikleri</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-home" onclick="goHome()">
+                        <i class="fas fa-home me-2"></i>Ana Sayfa
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4" id="topMetricsContainer">
+            </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Müşteri Segmentleri</h5>
+                        <div class="chart-container">
+                            <canvas id="segmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Müşteri Yolculuğu</h5>
+                        <div class="chart-container">
+                            <canvas id="journeyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-4 mb-3">
+                <div class="table-container">
+                    <h6 class="mb-3">Kazanım Kanalları</h6>
+                    <div id="channelsContainer">
+                        </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="table-container">
+                    <h6 class="mb-3">Memnuniyet Skorları</h6>
+                    <div id="satisfactionContainer">
+                        </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="table-container">
+                    <h6 class="mb-3">Popüler Aktiviteler</h6>
+                    <div id="activitiesContainer">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api/dashboard';
+
+        // Helper function to fetch data from API
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                return null; // Handle error gracefully
+            }
+        }
+
+        // 1. Top Metrics (En Üstteki Metrik Kartları)
+        async function loadTopMetrics() {
+            const metrics = await fetchData('top-metrics');
+            const container = document.getElementById('topMetricsContainer');
+            if (metrics && container) {
+                container.innerHTML = ''; // Mevcut içeriği temizle
+                metrics.forEach(metric => {
+                    const trendClass = metric.trend_status || 'neutral'; // 'positive', 'negative', 'neutral'
+                    const displayTrend = metric.trend_value !== null ? `${metric.trend_value > 0 ? '+' : ''}${metric.trend_value}%` : '';
+                    
+                    // Icon background color class mapping. Directly use metric.color if it's a CSS class like 'blue', 'red' etc.
+                    // Or if it's a HEX, we might need to add a style attribute. For now, assuming CSS classes for simplicity.
+                    // If metric.color is a HEX, you'll need to modify the .icon-metric style to use inline style for background.
+                    // For now, let's map provided colors to existing gradient classes if possible, or create a generic one.
+                    let iconBgClass = '';
+                    if (metric.color === 'blue') iconBgClass = 'icon-blue';
+                    else if (metric.color === 'red') iconBgClass = 'icon-red';
+                    else if (metric.color === 'green') iconBgClass = 'icon-green';
+                    else if (metric.color === 'purple') iconBgClass = 'icon-purple';
+                    else iconBgClass = 'icon-blue'; // Default fallback
+
+                    const cardHtml = `
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card metric-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-metric ${iconBgClass} me-3">
+                                        <i class="${metric.icon}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="metric-label">${metric.name}</div>
+                                        <div class="metric-value">${metric.display_value}</div>
+                                        <div class="metric-change ${trendClass}">${displayTrend}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                });
+            }
+        }
+
+        // 2. Müşteri Segmentleri (Doughnut Chart)
+        async function loadSegmentChart() {
+            const data = await fetchData('segments');
+            if (data) {
+                const segmentCtx = document.getElementById('segmentChart').getContext('2d');
+                new Chart(segmentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.values,
+                            backgroundColor: data.colors, // Flask'ten gelen renkleri kullan
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 3. Müşteri Yolculuğu (Bar Chart)
+        async function loadJourneyChart() {
+            const data = await fetchData('journey');
+            if (data) {
+                const journeyCtx = document.getElementById('journeyChart').getContext('2d');
+                new Chart(journeyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.values,
+                            backgroundColor: data.colors, // Flask'ten gelen renkleri kullan
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 4. Kazanım Kanalları (Progress Barlar)
+        async function loadChannels() {
+            const data = await fetchData('channels');
+            const container = document.getElementById('channelsContainer');
+            if (data && container) {
+                container.innerHTML = ''; // Mevcut içeriği temizle
+                const progressColors = ['bg-primary', 'bg-info', 'bg-success', 'bg-warning', 'bg-secondary']; // Örnek renkler
+                data.labels.forEach((label, index) => {
+                    const value = data.values[index];
+                    const colorClass = progressColors[index % progressColors.length]; // Renkleri döngüsel olarak kullan
+                    const channelHtml = `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>${label}</span>
+                                <span class="fw-bold">${value}%</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar ${colorClass}" style="width: ${value}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', channelHtml);
+                });
+            }
+        }
+
+        // 5. Memnuniyet Skorları
+        async function loadSatisfactionScores() {
+            const metrics = await fetchData('satisfaction');
+            const container = document.getElementById('satisfactionContainer');
+            if (metrics && container) {
+                container.innerHTML = ''; // Mevcut içeriği temizle
+                metrics.forEach(metric => {
+                    const badgeClass = `bg-${metric.color}`; // Bootstrap badge renk sınıfları
+                    const satisfactionHtml = `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${metric.name}</span>
+                                <span class="badge ${badgeClass}">${metric.display_value}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', satisfactionHtml);
+                });
+            }
+        }
+
+        // 6. Popüler Aktiviteler
+        async function loadActivities() {
+            const data = await fetchData('activities');
+            const container = document.getElementById('activitiesContainer');
+            if (data && container) {
+                container.innerHTML = ''; // Mevcut içeriği temizle
+                const progressColors = ['bg-primary', 'bg-info', 'bg-success', 'bg-warning', 'bg-danger']; // Örnek renkler
+                data.labels.forEach((label, index) => {
+                    const value = data.values[index];
+                    const colorClass = progressColors[index % progressColors.length]; // Renkleri döngüsel olarak kullan
+                    const activityHtml = `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>${label}</span>
+                                <span class="fw-bold">${value}%</span>
+                            </div>
+                            <div class="progress progress-custom">
+                                <div class="progress-bar ${colorClass}" style="width: ${value}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', activityHtml);
+                });
+            }
+        }
+
+        // Tüm verileri yüklemek için ana fonksiyon
+        async function loadAllDashboardData() {
+            await loadTopMetrics();
+            await loadSegmentChart();
+            await loadJourneyChart();
+            await loadChannels();
+            await loadSatisfactionScores();
+            await loadActivities();
+        }
+
+        // Sayfa yüklendiğinde verileri çek
+        document.addEventListener('DOMContentLoaded', loadAllDashboardData);
+
+        function goHome() {
+            alert('Ana sayfaya yönlendiriliyor...');
+            // Gerçek bir uygulamada burada window.location.href = 'ana_sayfa.html'; gibi bir yönlendirme olurdu.
+        }
+    </script>
+</body>
+</html>

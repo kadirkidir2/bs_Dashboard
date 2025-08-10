@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Performansı Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f5f7fa; /* Arkaplan rengi */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .dashboard-header {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); /* Mor gradyan */
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .card-custom {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            height: 100%; /* Kartların eşit yükseklikte olmasını sağlar */
+        }
+        .card-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2b2d42; /* Koyu gri */
+            margin-bottom: 0.5rem;
+        }
+        .metric-label {
+            color: #6c757d; /* Koyu gri tonu */
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .metric-trend {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .metric-trend.positive {
+            background-color: rgba(40, 167, 69, 0.2); /* Yeşil tonu */
+            color: #28a745;
+        }
+        .metric-trend.negative {
+            background-color: rgba(220, 53, 69, 0.2); /* Kırmızı tonu */
+            color: #dc3545;
+        }
+        /* Grafikler için konteyner stilleri */
+        .chart-container {
+            height: 350px; /* Grafikler için sabit yükseklik */
+            position: relative; /* İçindeki canvas'ın absolute positioning'i için */
+        }
+        .chart-container canvas {
+            position: absolute; /* Ebeveyninin tamamını kaplar */
+            width: 100% !important; /* Bootstrap'in w-100/h-100'ünü geçersiz kılabiliriz */
+            height: 100% !important;
+        }
+        .list-item-status-good {
+            color: #28a745; /* Yeşil */
+            font-weight: 600;
+        }
+        .list-item-status-needs_improvement {
+            color: #f8961e; /* Turuncu */
+            font-weight: 600;
+        }
+        .home-btn {
+            background: #4361ee; /* Mor */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            border: none; /* Buton border'ını kaldırır */
+        }
+
+        .home-btn:hover {
+            background: #3a56e8;
+            color: white; /* Hover'da renk sabit kalsın */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        /* Yükleme spinner'ı için */
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            vertical-align: text-bottom;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="dashboard-header text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                Site Performansı Dashboard
+            </h1>
+            <p class="mb-0 opacity-75">Web Sitesi Hızı, Uptime ve Kullanıcı Deneyimi Analizi</p>
+        </div>
+
+        <div class="row mb-4" id="mainMetricsContainer">
+            <div class="col-12 text-center py-5">
+                <div class="loading-spinner text-primary"></div>
+                <p class="mt-2">Metrikler yükleniyor...</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card-custom d-flex flex-column chart-container">
+                    <h3 class="h5 mb-3 text-secondary">Core Web Vitals</h3>
+                    <div class="flex-grow-1 position-relative">
+                        <canvas id="webVitalsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card-custom d-flex flex-column chart-container">
+                    <h3 class="h5 mb-3 text-secondary">Trafik Kaynakları</h3>
+                    <div class="flex-grow-1 position-relative">
+                        <canvas id="trafficSourcesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card-custom" id="pagePerformanceContainer">
+                    <h3 class="h5 mb-3 text-secondary">Sayfa Performansı</h3>
+                    <div class="text-center py-3">
+                        <div class="loading-spinner text-primary"></div>
+                        <p class="mt-2">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card-custom" id="mobilePerformanceContainer">
+                    <h3 class="h5 mb-3 text-secondary">Mobil Performans</h3>
+                    <div class="text-center py-3">
+                        <div class="loading-spinner text-primary"></div>
+                        <p class="mt-2">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="row h-100">
+                    <div class="col-12 mb-4">
+                        <div class="card-custom h-100" id="errorTrackingContainer">
+                            <h3 class="h5 mb-3 text-secondary">Hata İzleme</h3>
+                            <div class="text-center py-3">
+                                <div class="loading-spinner text-primary"></div>
+                                <p class="mt-2">Veriler yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card-custom h-100" id="userExperienceContainer">
+                            <h3 class="h5 mb-3 text-secondary">Kullanıcı Deneyimi</h3>
+                            <div class="text-center py-3">
+                                <div class="loading-spinner text-primary"></div>
+                                <p class="mt-2">Veriler yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5 mb-4">
+            <a href="dashboard.html" class="home-btn">
+                <i class="fas fa-home me-2"></i>
+                Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-vertical-radar-chart@0.1.0/dist/chartjs-plugin-vertical-radar-chart.min.js"></script>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api/website_performance'; // Flask API adresiniz
+        const ALL_METRICS_ENDPOINT = `${API_BASE_URL}/data`;
+
+        let webVitalsChart = null;
+        let trafficSourcesChart = null;
+        let allDashboardData = []; // Tüm dashboard verilerini burada tutacağız
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllDashboardData();
+        });
+
+        // Tüm dashboard verilerini tek bir çağrıda yükle
+        async function loadAllDashboardData() {
+            const containerIds = [
+                'mainMetricsContainer', 'webVitalsChart', 'trafficSourcesChart',
+                'pagePerformanceContainer', 'mobilePerformanceContainer',
+                'errorTrackingContainer', 'userExperienceContainer'
+            ];
+
+            // Yükleme durumlarını başlangıçta göster
+            containerIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.querySelector('.loading-spinner')) { // Eğer spinner yoksa ekle
+                    el.innerHTML = `
+                        <h3 class="h5 mb-3 text-secondary">${el.querySelector('h3') ? el.querySelector('h3').textContent : 'Veri Yükleniyor'}</h3>
+                        <div class="text-center py-3">
+                            <div class="loading-spinner text-primary"></div>
+                            <p class="mt-2">Veriler yükleniyor...</p>
+                        </div>
+                    `;
+                }
+            });
+
+            try {
+                const response = await fetch(ALL_METRICS_ENDPOINT);
+                if (!response.ok) throw new Error(`API yanıtı başarısız: ${response.statusText}`);
+                allDashboardData = await response.json(); // Tüm veriyi global değişkene ata
+                
+                // Veriler başarıyla çekildikten sonra ilgili fonksiyonları çağır
+                renderMainMetrics();
+                renderWebVitalsChart();
+                renderTrafficSourcesChart();
+                renderPagePerformance();
+                renderMobilePerformance();
+                renderErrorTracking();
+                renderUserExperience();
+
+            } catch (error) {
+                console.error('Tüm dashboard verileri yüklenirken hata:', error);
+                // Her bir konteyner için hata mesajını göster
+                containerIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = `
+                            <h3 class="h5 mb-3 text-secondary">${el.querySelector('h3') ? el.querySelector('h3').textContent : 'Veri Yüklenemedi'}</h3>
+                            <div class="text-center py-3 text-danger">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                <p>Veriler yüklenirken hata oluştu.</p>
+                                <button onclick="loadAllDashboardData()" class="btn btn-sm btn-outline-primary mt-2">Tekrar Dene</button>
+                            </div>
+                        `;
+                    }
+                });
+            }
+        }
+
+        // Yardımcı fonksiyon: Kategoriye göre veriyi filtrele
+        function getMetricsByCategory(categoryName) {
+            return allDashboardData.filter(item => item.category === categoryName)
+                                   .sort((a, b) => (a.display_order || 999) - (b.display_order || 999));
+        }
+
+        // 1. Ana Metrikleri Render Et
+        function renderMainMetrics() {
+            const metrics = getMetricsByCategory('main_metrics');
+            const container = document.getElementById('mainMetricsContainer');
+            container.innerHTML = ''; 
+
+            if (metrics.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center py-5 text-muted"><p>Ana metrik verisi bulunamadı.</p></div>`;
+                return;
+            }
+            
+            metrics.forEach(metric => {
+                const trendClass = parseFloat(metric.trend_value) >= 0 ? 'positive' : 'negative';
+                const trendSign = parseFloat(metric.trend_value) >= 0 ? '+' : '';
+                
+                container.innerHTML += `
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card-custom">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="${metric.icon} fa-xl me-3 text-primary"></i>
+                                <div>
+                                    <div class="metric-value">${metric.value}${metric.unit || ''}</div>
+                                    <div class="metric-label">${metric.sub_category}</div>
+                                </div>
+                            </div>
+                            ${metric.trend_value !== null ? `
+                                <div class="metric-trend ${trendClass}">
+                                    ${trendSign}${metric.trend_value}${metric.trend_unit || ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Core Web Vitals Grafiğini Render Et
+        function renderWebVitalsChart() {
+            const vitals = getMetricsByCategory('web_vitals');
+            const ctx = document.getElementById('webVitalsChart').getContext('2d');
+            
+            if (vitals.length === 0) {
+                 ctx.canvas.closest('.card-custom').innerHTML = `<h3 class="h5 mb-3 text-secondary">Core Web Vitals</h3><div class="text-center py-3 text-muted"><p>Veri bulunamadı.</p></div>`;
+                 return;
+            }
+
+            // Mevcut ve hedef değerleri ayrıştır
+            const labels = [];
+            const currentData = [];
+            const targetData = [];
+
+            // vitals array'ini 'sub_category' adına göre grupla
+            const groupedVitals = vitals.reduce((acc, curr) => {
+                const baseName = curr.sub_category.replace('_target', '');
+                if (!acc[baseName]) {
+                    acc[baseName] = {};
+                }
+                if (curr.sub_category.includes('_target')) {
+                    acc[baseName].target_value = parseFloat(curr.value);
+                    acc[baseName].target_unit = curr.unit;
+                } else {
+                    acc[baseName].current_value = parseFloat(curr.value);
+                    acc[baseName].current_unit = curr.unit;
+                    acc[baseName].display_order = curr.display_order; // Sıralama için
+                }
+                return acc;
+            }, {});
+
+            // Gruplanmış verileri diziye dönüştür ve sırala
+            const processedVitals = Object.keys(groupedVitals).map(key => ({
+                name: key,
+                current_value: groupedVitals[key].current_value || 0,
+                target_value: groupedVitals[key].target_value || 0,
+                unit: groupedVitals[key].current_unit || '', // Birim olarak mevcut olanı kullan
+                display_order: groupedVitals[key].display_order
+            })).sort((a, b) => a.display_order - b.display_order);
+
+
+            processedVitals.forEach(v => {
+                labels.push(v.name);
+                currentData.push(v.current_value);
+                targetData.push(v.target_value);
+            });
+            
+            const maxVal = Math.max(...currentData, ...targetData) * 1.2;
+
+            if (webVitalsChart) {
+                webVitalsChart.destroy();
+            }
+
+            webVitalsChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Mevcut',
+                            data: currentData,
+                            backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                            borderColor: '#4361ee',
+                            pointBackgroundColor: '#4361ee',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#4361ee',
+                            borderWidth: 2,
+                            fill: true
+                        },
+                        {
+                            label: 'Hedef',
+                            data: targetData,
+                            backgroundColor: 'rgba(76, 201, 240, 0.2)',
+                            borderColor: '#4cc9f0',
+                            pointBackgroundColor: '#4cc9f0',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#4cc9f0',
+                            borderWidth: 2,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: maxVal,
+                            pointLabels: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            ticks: {
+                                beginAtZero: true,
+                                font: {
+                                    size: 10
+                                },
+                                callback: function(value, index, values) {
+                                    const vital = processedVitals[index];
+                                    return value + (vital ? vital.unit : ''); // Birimi ekle
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Trafik Kaynakları Grafiğini Render Et
+        function renderTrafficSourcesChart() {
+            const sources = getMetricsByCategory('traffic_sources');
+            const ctx = document.getElementById('trafficSourcesChart').getContext('2d');
+
+            if (sources.length === 0) {
+                 ctx.canvas.closest('.card-custom').innerHTML = `<h3 class="h5 mb-3 text-secondary">Trafik Kaynakları</h3><div class="text-center py-3 text-muted"><p>Veri bulunamadı.</p></div>`;
+                 return;
+            }
+
+            const labels = sources.map(s => s.sub_category);
+            const data = sources.map(s => parseFloat(s.value));
+            const backgroundColors = sources.map(s => s.color || getRandomColor()); // Renk yoksa rastgele renk
+
+            if (trafficSourcesChart) {
+                trafficSourcesChart.destroy();
+            }
+
+            trafficSourcesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%',
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 10,
+                            top: 0,
+                            bottom: 0
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Sayfa Performansını Render Et
+        function renderPagePerformance() {
+            const performanceData = getMetricsByCategory('page_performance');
+            const container = document.getElementById('pagePerformanceContainer');
+            container.innerHTML = `
+                <h3 class="h5 mb-3 text-secondary">Sayfa Performansı</h3>
+                <ul class="list-group list-group-flush"></ul>
+            `;
+            const ul = container.querySelector('ul');
+
+            if (performanceData.length === 0) {
+                ul.innerHTML = `<li class="list-group-item bg-transparent text-muted text-center">Veri bulunamadı.</li>`;
+                return;
+            }
+
+            performanceData.forEach(item => {
+                // + -'li kısmı gösteren changeHtml değişkenini ve kullanımını tamamen kaldırıyoruz.
+                // Artık sadece item.sub_category ve item.value ile item.unit gösterilecek.
+                
+                ul.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        ${item.sub_category} <div>
+                            <span class="fw-bold text-primary">${item.value}${item.unit || ''}</span>
+                            </div>
+                    </li>
+                `;
+            });
+        }
+
+        // 5. Mobil Performansı Render Et
+        function renderMobilePerformance() {
+            const performanceData = getMetricsByCategory('mobile_performance');
+            const container = document.getElementById('mobilePerformanceContainer');
+            container.innerHTML = `
+                <h3 class="h5 mb-3 text-secondary">Mobil Performans</h3>
+                <ul class="list-group list-group-flush"></ul>
+            `;
+            const ul = container.querySelector('ul');
+
+            if (performanceData.length === 0) {
+                ul.innerHTML = `<li class="list-group-item bg-transparent text-muted text-center">Veri bulunamadı.</li>`;
+                return;
+            }
+
+            performanceData.forEach(item => {
+                const statusClass = item.status ? `list-item-status-${item.status.replace(' ', '_')}` : '';
+                ul.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        ${item.sub_category}
+                        <span class="${statusClass}">${item.value}${item.unit || ''}</span>
+                    </li>
+                `;
+            });
+        }
+
+        // 6. Hata İzlemeyi Render Et
+        function renderErrorTracking() {
+            const errorData = getMetricsByCategory('error_tracking');
+            const container = document.getElementById('errorTrackingContainer');
+            container.innerHTML = `
+                <h3 class="h5 mb-3 text-secondary">Hata İzleme</h3>
+                <ul class="list-group list-group-flush"></ul>
+            `;
+            const ul = container.querySelector('ul');
+
+            if (errorData.length === 0) {
+                ul.innerHTML = `<li class="list-group-item bg-transparent text-muted text-center">Veri bulunamadı.</li>`;
+                return;
+            }
+
+            errorData.forEach(item => {
+                ul.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        ${item.sub_category}
+                        <span class="fw-bold text-danger">${item.value}${item.unit || ''}</span>
+                    </li>
+                `;
+            });
+        }
+
+        // 7. Kullanıcı Deneyimini Render Et
+        function renderUserExperience() {
+            const uxData = getMetricsByCategory('user_experience');
+            const container = document.getElementById('userExperienceContainer');
+            container.innerHTML = `
+                <h3 class="h5 mb-3 text-secondary">Kullanıcı Deneyimi</h3>
+                <ul class="list-group list-group-flush"></ul>
+            `;
+            const ul = container.querySelector('ul');
+
+            if (uxData.length === 0) {
+                ul.innerHTML = `<li class="list-group-item bg-transparent text-muted text-center">Veri bulunamadı.</li>`;
+                return;
+            }
+
+            uxData.forEach(item => {
+                ul.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                        ${item.sub_category}
+                        <span class="fw-bold text-primary">${item.value}${item.unit || ''}</span>
+                    </li>
+                `;
+            });
+        }
+
+        // Yardımcı fonksiyon: Rastgele renk üret (trafik kaynakları için)
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+    </script>
+</body>
+</html>
